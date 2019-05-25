@@ -1,0 +1,8 @@
+[package]
+name = "minilisp"
+version = "0.1.0"
+authors = ["Andreas H. Klostergaard <akl@klostergaard.net>"]
+edition = "2018"
+
+[dependencies]
+assert_matches = "1.3"
