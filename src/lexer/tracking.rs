@@ -51,7 +51,7 @@ impl<'a> Cursor<'a> {
     pub fn new(seq: Peekable<Chars<'a>>) -> Cursor<'a> {
         Cursor {
             pos: Position::new(),
-            seq: seq,
+            seq,
         }
     }
     pub fn pos(&self) -> Position {

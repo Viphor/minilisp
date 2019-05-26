@@ -34,11 +34,8 @@ pub fn lex(input: &str) -> Result<Vec<Symbol>, error::LexerError> {
 
     let seq = input.chars().peekable();
     let mut cursor = tracking::Cursor::new(seq);
-    loop {
-        let c = match cursor.peek() {
-            Some(x) => *x,
-            None => break,
-        };
+    while let Some(x) = cursor.peek() {
+        let c = *x;
 
         if c.is_whitespace() {
             if !buffers.buffer.is_empty() {
