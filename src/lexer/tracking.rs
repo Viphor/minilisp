@@ -1,11 +1,11 @@
-use std::str::Chars;
-use std::iter::Peekable;
 use std::fmt;
+use std::iter::Peekable;
+use std::str::Chars;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Position {
-    line: u64,
-    character: u64
+    line: usize,
+    character: usize,
 }
 
 impl fmt::Display for Position {
@@ -18,34 +18,40 @@ impl Position {
     fn new() -> Position {
         Position {
             line: 1,
-            character: 0
+            character: 0,
         }
     }
-    pub fn at(line: u64, character: u64) -> Position {
+    pub fn at(line: usize, character: usize) -> Position {
         Position { line, character }
     }
-    pub fn line(&self) -> u64 {
+    pub fn line(&self) -> usize {
         self.line
     }
-    pub fn character(&self) -> u64 {
+    pub fn character(&self) -> usize {
         self.character
     }
     fn new_line(&mut self) {
         self.line += 1;
         self.character = 0;
     }
+    pub fn start_of(&self, symbol: &str) -> Position {
+        Position {
+            line: self.line,
+            character: self.character - symbol.chars().count(),
+        }
+    }
 }
 
 pub struct Cursor<'a> {
     pos: Position,
-    seq: Peekable<Chars<'a>>
+    seq: Peekable<Chars<'a>>,
 }
 
 impl<'a> Cursor<'a> {
     pub fn new(seq: Peekable<Chars<'a>>) -> Cursor<'a> {
         Cursor {
             pos: Position::new(),
-            seq: seq
+            seq: seq,
         }
     }
     pub fn pos(&self) -> Position {
