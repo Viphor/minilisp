@@ -1,11 +1,8 @@
-use super::tracking::Position;
 use super::*;
 
 #[test]
 fn lex_string() {
-    let out = lex(&String::from(
-        "(test '(new \"cool \\\"string\\\" stuff\") 123 #t #f)",
-    ));
+    let out = lex("(test '(new \"cool \\\"string\\\" stuff\") 123 -321 #t #f)");
     assert_eq!(
         vec![
             Symbol::LParen(Position::at(1, 0)),
@@ -19,9 +16,10 @@ fn lex_string() {
             ),
             Symbol::RParen(Position::at(1, 35)),
             Symbol::Primitive(Position::at(1, 37), Literal::Number(123)),
-            Symbol::Primitive(Position::at(1, 41), Literal::Boolean(true)),
-            Symbol::Primitive(Position::at(1, 44), Literal::Boolean(false)),
-            Symbol::RParen(Position::at(1, 46))
+            Symbol::Primitive(Position::at(1, 41), Literal::Number(-321)),
+            Symbol::Primitive(Position::at(1, 46), Literal::Boolean(true)),
+            Symbol::Primitive(Position::at(1, 49), Literal::Boolean(false)),
+            Symbol::RParen(Position::at(1, 51))
         ],
         out.unwrap()
     );
@@ -46,6 +44,14 @@ fn name_with_number() {
 }
 
 #[test]
+fn name_with_dash() {
+    assert_eq!(
+        vec![Symbol::Name(Position::at(1, 0), String::from("test-name"))],
+        lex("test-name").unwrap()
+    );
+}
+
+#[test]
 fn number_only() {
     assert_eq!(
         vec![Symbol::Primitive(
@@ -53,6 +59,17 @@ fn number_only() {
             Literal::Number(54321)
         )],
         lex("54321").unwrap()
+    );
+}
+
+#[test]
+fn negative_number() {
+    assert_eq!(
+        vec![Symbol::Primitive(
+            Position::at(1, 0),
+            Literal::Number(-12345)
+        )],
+        lex("-12345").unwrap()
     );
 }
 

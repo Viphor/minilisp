@@ -1,24 +1,51 @@
+//! This module mainly contains the function `lex`, which can take a string
+//! reference and convert it into a vector of symbols.
+
 #[cfg(test)]
 mod tests;
 
 pub mod error;
 mod tracking;
 
-#[derive(Debug, PartialEq)]
-pub enum Literal {
-    Number(i64),
-    Boolean(bool),
-    String(String),
-    None,
-}
+pub use tracking::Position;
 
+/// Enum over the different symbols we can lex.
+///
+/// Each symbol contains a `Position` struct, which denotes the
+/// position of the first character of the symbol.
 #[derive(Debug, PartialEq)]
 pub enum Symbol {
-    Quote(tracking::Position),
-    LParen(tracking::Position),
-    RParen(tracking::Position),
-    Name(tracking::Position, String),
-    Primitive(tracking::Position, Literal),
+    /// Represents the quote `'`
+    Quote(Position),
+    /// Represents the left parenthesis `(`
+    LParen(Position),
+    /// Represents the right parenthesis `)`
+    RParen(Position),
+    /// Represents bound names
+    /// ### Syntax
+    /// Matched by the following regex: `[^"#0-9\s][^"\s]*`
+    Name(Position, String),
+    /// Represents any of the literals defined in `enum Literal`
+    Primitive(Position, Literal),
+}
+
+/// Enum over the literal types that we can lex.
+#[derive(Debug, PartialEq)]
+pub enum Literal {
+    /// This literal encodes numbers. Currently it only supports integers.
+    /// ### Syntax
+    /// The symbol is matched by the following regex: `-?[0-9]+`
+    Number(i64),
+    /// This literal encodes boolean values.
+    /// ### Syntax
+    /// The symbol is matched by the following regex: `#[tf]`
+    Boolean(bool),
+    /// This literal encodes string values.
+    /// ### Syntax
+    /// The symbol is matched by the following regex: `"(.*(\\")?)*"`
+    String(String),
+    /// This literal is currently not supported yet.
+    None,
 }
 
 struct Buffers {
@@ -26,6 +53,30 @@ struct Buffers {
     buffer: String,
 }
 
+/// Turns a string into a vector of symbols.
+///
+/// # Example
+/// 
+/// ```
+/// use minilisp::lexer::{Symbol, Literal, Position};
+///
+/// let program = "(def 'four (+ 2 2))";
+/// 
+/// let expected = vec![
+///     Symbol::LParen(Position::at(1,0)),
+///     Symbol::Name(Position::at(1,1), String::from("def")),
+///     Symbol::Quote(Position::at(1,5)),
+///     Symbol::Name(Position::at(1,6), String::from("four")),
+///     Symbol::LParen(Position::at(1,11)),
+///     Symbol::Name(Position::at(1,12), String::from("+")),
+///     Symbol::Primitive(Position::at(1,14), Literal::Number(2)),
+///     Symbol::Primitive(Position::at(1,16), Literal::Number(2)),
+///     Symbol::RParen(Position::at(1,17)),
+///     Symbol::RParen(Position::at(1,18))
+/// ];
+///
+/// assert_eq!(minilisp::lexer::lex(program), Ok(expected));
+/// ```
 pub fn lex(input: &str) -> Result<Vec<Symbol>, error::LexerError> {
     let mut buffers = Buffers {
         symbols: Vec::new(),
@@ -55,8 +106,9 @@ pub fn lex(input: &str) -> Result<Vec<Symbol>, error::LexerError> {
             '#' if buffers.buffer.is_empty() => {
                 push_symbol(&mut buffers, collect_bool(&mut cursor)?, &cursor)
             }
-            n if n.is_ascii_digit() && buffers.buffer.is_empty() => {
-                push_symbol(&mut buffers, collect_number(&mut cursor), &cursor)
+            n if n.is_ascii_digit() && (buffers.buffer.is_empty() || buffers.buffer == "-") => {
+                let number = collect_number(&mut cursor, &mut buffers.buffer);
+                push_symbol(&mut buffers, number, &cursor)
             }
             _ => true,
         } {
@@ -94,9 +146,10 @@ fn push_symbol(buffers: &mut Buffers, symbol: Symbol, seq: &tracking::Cursor) ->
     false
 }
 
-fn collect_number(seq: &mut tracking::Cursor) -> Symbol {
-    let startpos = seq.pos();
-    let mut buffer = String::new();
+fn collect_number(seq: &mut tracking::Cursor, prev: &mut String) -> Symbol {
+    let startpos = seq.pos().start_of(prev);
+    let mut buffer = prev.clone();
+    prev.clear();
     while seq.peek().unwrap_or(&'a').is_ascii_digit() {
         // Using 'a' as a random non digit character
         buffer.push(seq.next().unwrap());
@@ -121,6 +174,7 @@ fn collect_bool(seq: &mut tracking::Cursor) -> Result<Symbol, error::LexerError>
     }
 }
 
+/// Collects a string litteral based on the following syntax: "(.*(\\")?)*"
 fn collect_string(seq: &mut tracking::Cursor) -> Result<Symbol, error::LexerError> {
     let startpos = seq.pos();
     let mut buffer = String::new();

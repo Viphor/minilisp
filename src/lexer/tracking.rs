@@ -2,9 +2,14 @@ use std::fmt;
 use std::iter::Peekable;
 use std::str::Chars;
 
+/// Representation of a position in the code.
+///
+/// NOTE: The line number is 1-indexed, but the character number is 0-indexed.
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Position {
+    /// Denotes the line number (1-indexed)
     line: usize,
+    /// Denotes the column number (0-indexed)
     character: usize,
 }
 
@@ -21,12 +26,15 @@ impl Position {
             character: 0,
         }
     }
+    /// Generates a new `Position` at the given line and character.
     pub fn at(line: usize, character: usize) -> Position {
         Position { line, character }
     }
+    /// Returns the line number.
     pub fn line(&self) -> usize {
         self.line
     }
+    /// Returns the character number.
     pub fn character(&self) -> usize {
         self.character
     }
@@ -34,6 +42,8 @@ impl Position {
         self.line += 1;
         self.character = 0;
     }
+    /// Generates a new `Position` by subtracting the given string from
+    /// the current position.
     pub fn start_of(&self, symbol: &str) -> Position {
         Position {
             line: self.line,
