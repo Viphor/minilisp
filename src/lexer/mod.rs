@@ -13,7 +13,7 @@ pub use tracking::Position;
 ///
 /// Each symbol contains a `Position` struct, which denotes the
 /// position of the first character of the symbol.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Symbol {
     /// Represents the quote `'`
     Quote(Position),
@@ -29,8 +29,21 @@ pub enum Symbol {
     Primitive(Position, Literal),
 }
 
+impl Symbol {
+    /// Extracts the position of a `Symbol`.
+    pub fn position(&self) -> Position {
+        *match self {
+            Symbol::Quote(p) => p,
+            Symbol::LParen(p) => p,
+            Symbol::RParen(p) => p,
+            Symbol::Name(p, _) => p,
+            Symbol::Primitive(p, _) => p,
+        }
+    }
+}
+
 /// Enum over the literal types that we can lex.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Literal {
     /// This literal encodes numbers. Currently it only supports integers.
     /// ### Syntax
