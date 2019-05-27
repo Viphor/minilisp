@@ -9,14 +9,25 @@ pub struct AST {
     root: Box<Compound>,
 }
 
+impl AST {
+    pub fn parse(input: &mut Queue) -> Result<AST, error::ParserError> {
+        Ok(AST {
+            root: Box::new(Compound::parse(input)?),
+        })
+    }
+    pub fn root(&self) -> &Box<Compound> {
+        &self.root
+    }
+}
+
 #[derive(Debug, PartialEq)]
-enum Compound {
+pub enum Compound {
     Some(Expression, Box<Compound>),
     None,
 }
 
 #[derive(Debug, PartialEq)]
-enum Expression {
+pub enum Expression {
     QuoteExpression(Box<Expression>),
     List(List),
     Name(Position, String),
@@ -24,9 +35,9 @@ enum Expression {
 }
 
 #[derive(Debug, PartialEq)]
-struct List {
+pub struct List {
     left: Position,
-    content: Box<Compound>,
+    pub content: Box<Compound>,
     right: Position,
 }
 

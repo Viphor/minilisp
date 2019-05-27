@@ -22,11 +22,18 @@ use super::lexer::{Literal, Symbol};
 #[cfg(test)]
 mod tests;
 
-mod ast;
+pub mod ast;
 mod error;
 
-//pub fn parse(symbols: Vec<Symbol>) -> ast::AST {
-//    ast::AST {
-//        root: Box::new(ast::Compound::None)
-//    }
-//}
+/// Parses a `Vec<lexer::Symbol>` into an `parser::ast::AST`
+///
+/// TODO: Add an example, and explanation of the AST
+pub fn parse(symbols: &mut Vec<Symbol>) -> Result<ast::AST, error::ParserError> {
+    let ast = ast::AST::parse(&mut symbols.iter().peekable())?;
+    if let ast::Compound::None = **ast.root() {
+        if let Some(s) = symbols.first() {
+            return Err(error::ParserError::new(s.position(), format!("Expected (, name, string, number, or boolean, found: {:?}", s)))
+        }
+    }
+    Ok(ast)
+}
