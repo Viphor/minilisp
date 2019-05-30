@@ -69,12 +69,12 @@ struct Buffers {
 /// Turns a string into a vector of symbols.
 ///
 /// # Example
-/// 
+///
 /// ```
 /// use minilisp::lexer::{Symbol, Literal, Position};
 ///
 /// let program = "(def 'four (+ 2 2))";
-/// 
+///
 /// let expected = vec![
 ///     Symbol::LParen(Position::at(1,0)),
 ///     Symbol::Name(Position::at(1,1), String::from("def")),

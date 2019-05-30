@@ -1,10 +1,11 @@
-use super::super::lexer::Position;
+pub use super::super::lexer::{Literal, Position};
 use super::*;
 use std::{iter::Peekable, slice::Iter};
 
 #[cfg(test)]
 mod tests;
 
+#[derive(Debug)]
 pub struct AST {
     root: Box<Compound>,
 }
@@ -43,7 +44,7 @@ pub struct List {
 
 type Queue<'a> = Peekable<Iter<'a, Symbol>>;
 
-trait Parsable {
+pub trait Parsable {
     type Item;
 
     fn parse(input: &mut Queue) -> Result<Self::Item, error::ParserError>;
