@@ -7,7 +7,7 @@ mod tests;
 
 #[derive(Debug)]
 pub struct AST {
-    root: Box<Compound>,
+    pub root: Box<Compound>,
 }
 
 impl AST {
@@ -15,9 +15,6 @@ impl AST {
         Ok(AST {
             root: Box::new(Compound::parse(input)?),
         })
-    }
-    pub fn root(&self) -> &Box<Compound> {
-        &self.root
     }
 }
 

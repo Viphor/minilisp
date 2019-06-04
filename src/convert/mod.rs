@@ -6,10 +6,26 @@ use super::parser::ast::{self, AST};
 mod tests;
 
 pub fn convert(ast: AST) -> Vec<ListItem> {
-    let expression_list = convert_compound(*ast.root());
+    let mut expression_list = convert_compound(*ast.root);
     let mut result = Vec::new();
 
-    while let 
+    while let Some(li) = expression_list {
+        if let Some(content) = li.car {
+            result.push(content);
+        }
+        if let Some(cdr) = li.cdr {
+            expression_list = match cdr {
+                ListItem::Item(_) => {
+                    result.push(cdr);
+                    None
+                },
+                ListItem::Construct(cons) => Some(cons),
+            };
+        } else {
+            expression_list = None;
+        }
+    }
+    result
 }
 
 fn convert_compound(compound: ast::Compound) -> Option<Box<Construct>> {

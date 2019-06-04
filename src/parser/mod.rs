@@ -30,7 +30,7 @@ mod error;
 /// TODO: Add an example, and explanation of the AST
 pub fn parse(symbols: &mut Vec<Symbol>) -> Result<ast::AST, error::ParserError> {
     let ast = ast::AST::parse(&mut symbols.iter().peekable())?;
-    if let ast::Compound::None = **ast.root() {
+    if let ast::Compound::None = *ast.root {
         if let Some(s) = symbols.first() {
             return Err(error::ParserError::new(
                 s.position(),

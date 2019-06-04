@@ -1,6 +1,6 @@
 //use std::fmt;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Item {
     //Function(Box<Fn(Construct) -> Construct>),
     Number(i64),
@@ -38,26 +38,20 @@ pub enum Item {
 //    }
 //}
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ListItem {
     Item(Item),
     Construct(Box<Construct>),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Construct {
-    car: Option<ListItem>,
-    cdr: Option<ListItem>,
+    pub car: Option<ListItem>,
+    pub cdr: Option<ListItem>,
 }
 
 impl Construct {
     pub fn new(car: Option<ListItem>, cdr: Option<ListItem>) -> Construct {
         Construct { car, cdr }
-    }
-    pub fn car(&self) -> &Option<ListItem> {
-        &self.car
-    }
-    pub fn cdr(&self) -> &Option<ListItem> {
-        &self.cdr
     }
 }
