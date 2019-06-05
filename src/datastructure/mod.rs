@@ -1,5 +1,3 @@
-//use std::fmt;
-
 #[derive(Debug, PartialEq, Clone)]
 pub enum Item {
     //Function(Box<Fn(Construct) -> Construct>),
@@ -7,51 +5,17 @@ pub enum Item {
     String(String),
     Boolean(bool),
     Name(String),
-}
-
-//impl PartialEq for Item {
-//    fn eq(&self, other: &Self) -> bool {
-//        match self {
-//            Item::Function(_) => false,
-//            Item::Number(n) => if let Item::Number(on) = other {
-//                n == on
-//            } else { false },
-//            Item::String(s) => if let Item::String(os) = other {
-//                s == os
-//            } else { false },
-//            Item::Boolean(b) => if let Item::Boolean(ob) = other {
-//                b == ob
-//            } else { false },
-//            Item::Name(n) => if let Item::Name(on) = other {
-//                n == on
-//            } else { false },
-//        }
-//    }
-//}
-//
-//impl fmt::Debug for Item {
-//    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//        match self {
-//            Item::Function(_) => write!(f, "Lambda"),
-//            i => write!(f, "{:?}", i),
-//        }
-//    }
-//}
-
-#[derive(Debug, PartialEq, Clone)]
-pub enum ListItem {
-    Item(Item),
     Construct(Box<Construct>),
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Construct {
-    pub car: Option<ListItem>,
-    pub cdr: Option<ListItem>,
+    pub car: Option<Item>,
+    pub cdr: Option<Item>,
 }
 
 impl Construct {
-    pub fn new(car: Option<ListItem>, cdr: Option<ListItem>) -> Construct {
+    pub fn new(car: Option<Item>, cdr: Option<Item>) -> Construct {
         Construct { car, cdr }
     }
 }

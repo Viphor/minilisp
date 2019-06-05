@@ -32,7 +32,7 @@ fn convert_none() {
 #[test]
 fn convert_name() {
     assert_eq!(
-        ListItem::Item(Item::Name(String::from("test"))),
+        Item::Name(String::from("test")),
         convert_expression(ast::Expression::Name(
             ast::Position::at(1, 0),
             String::from("test")
@@ -43,7 +43,7 @@ fn convert_name() {
 #[test]
 fn convert_literal() {
     assert_eq!(
-        ListItem::Item(Item::Number(123)),
+        Item::Number(123),
         convert_expression(ast::Expression::Primitive(
             ast::Position::at(1, 0),
             ast::Literal::Number(123)
@@ -62,7 +62,7 @@ fn convert_empty_list() {
         .peekable(),
     );
     assert_eq!(
-        ListItem::Construct(Box::new(Construct::new(None, None))),
+        Item::Construct(Box::new(Construct::new(None, None))),
         convert_expression(ast::Expression::List(list.unwrap()))
     );
 }
@@ -70,10 +70,10 @@ fn convert_empty_list() {
 #[test]
 fn convert_quote_expression() {
     assert_eq!(
-        ListItem::Construct(Box::new(Construct::new(
-            Some(ListItem::Item(Item::Name(String::from("quote")))),
-            Some(ListItem::Construct(Box::new(Construct::new(
-                Some(ListItem::Item(Item::Name(String::from("test")))),
+        Item::Construct(Box::new(Construct::new(
+            Some(Item::Name(String::from("quote"))),
+            Some(Item::Construct(Box::new(Construct::new(
+                Some(Item::Name(String::from("test"))),
                 None
             ))))
         ))),
@@ -92,9 +92,9 @@ fn convert_empty_compound() {
 fn convert_compound_some() {
     assert_eq!(
         Some(Box::new(Construct::new(
-            Some(ListItem::Item(Item::Name(String::from("test")))),
-            Some(ListItem::Construct(Box::new(Construct::new(
-                Some(ListItem::Item(Item::Number(123))),
+            Some(Item::Name(String::from("test"))),
+            Some(Item::Construct(Box::new(Construct::new(
+                Some(Item::Number(123)),
                 None
             ))))
         ))),

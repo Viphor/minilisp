@@ -1,11 +1,11 @@
 
-use super::datastructure::{Construct, Item, ListItem};
+use super::datastructure::{Construct, Item};
 use super::parser::ast::{self, AST};
 
 #[cfg(test)]
 mod tests;
 
-pub fn convert(ast: AST) -> Vec<ListItem> {
+pub fn convert(ast: AST) -> Vec<Item> {
     let mut expression_list = convert_compound(*ast.root);
     let mut result = Vec::new();
 
@@ -15,11 +15,11 @@ pub fn convert(ast: AST) -> Vec<ListItem> {
         }
         if let Some(cdr) = li.cdr {
             expression_list = match cdr {
-                ListItem::Item(_) => {
+                Item::Construct(cons) => Some(cons),
+                _ => {
                     result.push(cdr);
                     None
                 },
-                ListItem::Construct(cons) => Some(cons),
             };
         } else {
             expression_list = None;
@@ -33,7 +33,7 @@ fn convert_compound(compound: ast::Compound) -> Option<Box<Construct>> {
         ast::Compound::Some(e, c) => Some(Box::new(Construct::new(
             Some(convert_expression(e)),
             match convert_compound(*c) {
-                Some(s) => Some(ListItem::Construct(s)),
+                Some(s) => Some(Item::Construct(s)),
                 None => None,
             },
         ))),
@@ -41,21 +41,21 @@ fn convert_compound(compound: ast::Compound) -> Option<Box<Construct>> {
     }
 }
 
-fn convert_expression(expression: ast::Expression) -> ListItem {
+fn convert_expression(expression: ast::Expression) -> Item {
     match expression {
-        ast::Expression::QuoteExpression(e) => ListItem::Construct(Box::new(Construct::new(
-            Some(ListItem::Item(Item::Name(String::from("quote")))),
-            Some(ListItem::Construct(Box::new(Construct::new(
+        ast::Expression::QuoteExpression(e) => Item::Construct(Box::new(Construct::new(
+            Some(Item::Name(String::from("quote"))),
+            Some(Item::Construct(Box::new(Construct::new(
                 Some(convert_expression(*e)),
                 None,
             )))),
         ))),
         ast::Expression::List(l) => match convert_compound(*l.content) {
-            Some(s) => ListItem::Construct(s),
-            None => ListItem::Construct(Box::new(Construct::new(None, None))),
+            Some(s) => Item::Construct(s),
+            None => Item::Construct(Box::new(Construct::new(None, None))),
         },
-        ast::Expression::Name(_, n) => ListItem::Item(Item::Name(n)),
-        ast::Expression::Primitive(_, l) => ListItem::Item(convert_primitive(l)),
+        ast::Expression::Name(_, n) => Item::Name(n),
+        ast::Expression::Primitive(_, l) => convert_primitive(l),
     }
 }
 
