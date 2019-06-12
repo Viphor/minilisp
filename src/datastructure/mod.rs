@@ -1,6 +1,5 @@
 #[derive(Debug, PartialEq, Clone)]
 pub enum Item {
-    //Function(Box<Fn(Construct) -> Construct>),
     Number(i64),
     String(String),
     Boolean(bool),
