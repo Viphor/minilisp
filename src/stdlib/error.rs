@@ -16,6 +16,8 @@ pub enum EvalErrorCode {
     E0004,
     /// Cannot unwrap `Cons` field
     E0005,
-    /// Missmatch in number of arguments
+    /// Mismatch in number of arguments
     E0006,
+    /// Not implemented yet
+    E0007,
 }

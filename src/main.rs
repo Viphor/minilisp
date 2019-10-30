@@ -1,12 +1,39 @@
-use minilisp::{lexer, parser};
+use minilisp::{convert, lexer, parser, stdlib};
 
 fn main() {
     let test = "(test '(\"cool \\\"string\\\" stuff\" 123))";
-    println!("String to test: {}", test);
+    println!("String to test:\n{}\n", test);
     let mut lexed = lexer::lex(test).unwrap();
-    println!("{:?}", lexed);
+    println!("Lexer output:\n{:?}\n", lexed);
     let parsed = parser::parse(&mut lexed);
-    println!("{:?}", parsed);
+    println!("Parser output:\n{:?}\n", parsed);
+
+    let converted = convert::convert(parsed.expect("Could not parse the input"));
+    println!("Converter output:\n{:?}\n", converted);
+
+    println!("Converted output in pretty print:");
+    for i in converted.iter() {
+        println!("{}", i);
+    }
+
+    println!("\n\n\n");
+
+    let program = "((lambda (x) x) 5)";
+    println!("Program:\n{}", program);
+    let answer = stdlib::eval(
+        convert::convert(
+            parser::parse(&mut lexer::lex(program).unwrap()).expect("Could not parse the input"),
+        )
+        .first()
+        .unwrap(),
+        stdlib::stdlib(),
+    )
+    .expect("Could not evaluate the input");
+    if let stdlib::EnvItem::Data(a) = answer {
+        println!("Answer:\n{}", a);
+    } else {
+        println!("Answer (not pretty):\n{:?}", answer);
+    }
 
     println!("Hello, world!");
 }

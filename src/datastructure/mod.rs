@@ -14,6 +14,19 @@ pub enum Item {
     None,
 }
 
+impl fmt::Display for Item {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Item::Number(num) => write!(f, "{}", num),
+            Item::String(s) => write!(f, "{}", s),
+            Item::Boolean(b) => write!(f, "{}", b),
+            Item::Name(n) => write!(f, "{}", n),
+            Item::Cons(c) => write!(f, "{}", c),
+            Item::None => write!(f, "()"),
+        }
+    }
+}
+
 pub type ConsElement = Item;
 type ConsElementContainer<T> = Box<T>;
 
@@ -30,36 +43,26 @@ impl Cons {
             cdr: ConsElementContainer::new(cdr),
         }
     }
-    //    pub fn new(mut env: Rc<Environment>, car: Option<Item>, cdr: Option<Item>) -> Cons {
-    //        let env = match Rc::get_mut(&mut env) {
-    //            Some(e) => e,
-    //            None => panic!("Could not get write lock for memory."),
-    //        };
-    //        let car = match car {
-    //            Some(Item::Pointer(p)) => Some(p),
-    //            Some(i) => Some(env.alloc(EnvItem::Data(i))),
-    //            None => None,
-    //        };
-    //        let cdr = match cdr {
-    //            Some(Item::Pointer(p)) => Some(p),
-    //            Some(i) => Some(env.alloc(EnvItem::Data(i))),
-    //            None => None,
-    //        };
-    //        Cons { car, cdr }
-    //    }
-    // TODO Fix these iterators
-    //pub fn iter<'a>(&self, env: &'a Environment) -> ConsIterator<'a> {
-    //    ConsIterator {
-    //        env,
-    //        current: Some(&self),
-    //    }
-    //}
-    //pub fn iter_ref<'a>(&'a self, env: &'a Environment) -> RefConsIterator {
-    //    RefConsIterator {
-    //        env,
-    //        currentIndex: self.car.as_ref(),
-    //    }
-    //}
+
+    pub fn iter(&self) -> ConsIter {
+        ConsIter {
+            current: Some(self),
+            special_case: None,
+        }
+    }
+}
+
+impl fmt::Display for Cons {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "(")?;
+        for it in self.iter().take(1) {
+            write!(f, "{}", it)?;
+        }
+        for it in self.iter().skip(1) {
+            write!(f, " {}", it)?;
+        }
+        write!(f, ")")
+    }
 }
 
 impl From<Cons> for Vec<Item> {
@@ -78,6 +81,43 @@ impl From<Cons> for Vec<Item> {
             }
         }
         vec
+    }
+}
+
+pub struct ConsIter<'a> {
+    current: Option<&'a Cons>,
+    special_case: Option<&'a Item>,
+}
+
+impl<'a> Iterator for ConsIter<'a> {
+    type Item = &'a Item;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.current {
+            Some(c) => {
+                let res = &c.car;
+                self.current = match &*c.cdr {
+                    Item::Cons(cc) => Some(cc),
+                    Item::None => None,
+                    i => {
+                        self.special_case = Some(i);
+                        None
+                    }
+                };
+                Some(res)
+            }
+            None => match self.special_case {
+                Some(Item::None) => {
+                    self.special_case = None;
+                    None
+                }
+                Some(i) => {
+                    self.special_case = None;
+                    Some(i)
+                }
+                None => None,
+            },
+        }
     }
 }
 

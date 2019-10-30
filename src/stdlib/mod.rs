@@ -13,11 +13,19 @@ pub mod lambda;
 pub use eval::eval;
 pub use lambda::lambda;
 
-pub fn build_std_env() -> Rc<Environment> {
+pub fn stdlib() -> Rc<Environment> {
     let mut env = Environment::default();
 
     env.assign("lambda", EnvItem::Function(Rc::new(lambda)));
     env.assign("eval", EnvItem::Function(Rc::new(eval)));
+    env.assign("def", EnvItem::Function(Rc::new(def)));
 
     Rc::new(env)
+}
+
+pub fn def(_params: &Item, _env: Rc<Environment>) -> FunctionOutput {
+    Err(error::EvalError {
+        code: error::EvalErrorCode::E0007,
+        message: "'def' is not yet implemented yet".into(),
+    })
 }

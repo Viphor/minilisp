@@ -33,10 +33,10 @@ fn convert_none() {
 fn convert_name() {
     assert_eq!(
         Item::Name(String::from("test")),
-        convert_expression(
-            ast::Expression::Name(ast::Position::at(1, 0), String::from("test")),
-            Rc::new(Environment::new())
-        )
+        convert_expression(ast::Expression::Name(
+            ast::Position::at(1, 0),
+            String::from("test")
+        ))
     );
 }
 
@@ -44,10 +44,10 @@ fn convert_name() {
 fn convert_literal() {
     assert_eq!(
         Item::Number(123),
-        convert_expression(
-            ast::Expression::Primitive(ast::Position::at(1, 0), ast::Literal::Number(123)),
-            Rc::new(Environment::new())
-        )
+        convert_expression(ast::Expression::Primitive(
+            ast::Position::at(1, 0),
+            ast::Literal::Number(123)
+        ))
     );
 }
 
@@ -61,33 +61,20 @@ fn convert_empty_list() {
         .iter()
         .peekable(),
     );
-    let mut env = Rc::new(Environment::new());
-    let res = convert_expression(ast::Expression::List(list.unwrap()), env);
-    let resItem = env.get(res.unwrap());
-    assert_eq!(
-        Item::Cons(Cons::from_pointers(None, None)),
-        resItem
-    );
+    let res = convert_expression(ast::Expression::List(list.unwrap()));
+    assert_eq!(Item::None, res);
 }
 
 #[test]
 fn convert_quote_expression() {
-    let mut env = Rc::new(Environment::new());
-    let res = convert_expression(
-        ast::Expression::QuoteExpression(Box::new(ast::Expression::Name(
-            ast::Position::at(1, 1),
-            String::from("test"),
-        ))),
-        env,
-    );
+    //let res = convert_expression(ast::Expression::QuoteExpression(Box::new(
+    //    ast::Expression::Name(ast::Position::at(1, 1), String::from("test")),
+    //)));
     assert_eq!(
-        Item::Cons(Box::new(Cons::new(
-            Some(Item::Name(String::from("quote"))),
-            Some(Item::Cons(Box::new(Cons::new(
-                Some(Item::Name(String::from("test"))),
-                None
-            ))))
-        ))),
+        Item::Cons(Cons::new(
+            Item::Name(String::from("quote")),
+            Item::Cons(Cons::new(Item::Name(String::from("test")), Item::None))
+        )),
         convert_expression(ast::Expression::QuoteExpression(Box::new(
             ast::Expression::Name(ast::Position::at(1, 1), String::from("test"))
         )))
@@ -96,22 +83,16 @@ fn convert_quote_expression() {
 
 #[test]
 fn convert_empty_compound() {
-    assert_eq!(
-        None,
-        convert_compound(ast::Compound::None, Rc::new(Environment::new()))
-    );
+    assert_eq!(Item::None, convert_compound(ast::Compound::None));
 }
 
 #[test]
 fn convert_compound_some() {
     assert_eq!(
-        Some(Box::new(Cons::new(
-            Some(Item::Name(String::from("test"))),
-            Some(Item::Cons(Box::new(Cons::new(
-                Some(Item::Number(123)),
-                None
-            ))))
-        ))),
+        Item::Cons(Cons::new(
+            Item::Name(String::from("test")),
+            Item::Cons(Cons::new(Item::Number(123), Item::None))
+        )),
         convert_compound(ast::Compound::Some(
             ast::Expression::Name(ast::Position::at(1, 0), String::from("test")),
             Box::new(ast::Compound::Some(
