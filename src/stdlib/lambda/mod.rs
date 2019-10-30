@@ -1,7 +1,7 @@
 use super::*;
 use std::rc::Rc;
 
-pub fn lambda(params: &Item, _: Rc<Environment>) -> FunctionOutput {
+pub fn lambda(params: &Item, _: &mut Environment) -> FunctionOutput {
     let cons;
     if let Item::Cons(c) = params {
         cons = c.clone();
@@ -9,41 +9,33 @@ pub fn lambda(params: &Item, _: Rc<Environment>) -> FunctionOutput {
         panic!("A lambda expression must have a least a set of arguments and a body");
     }
     let argument_bindings = cons.car;
-    let body = cons.cdr.as_ref().clone();
+    let body = match cons.cdr.as_ref().clone() {
+        Item::Cons(c) => c.into(),
+        i => vec![i],
+    };
 
-    Ok(Output::Function(Rc::new(move |input, env| {
-        let mut env = env.clone();
+    Ok(Output::Function(Rc::new(move |input, mut env| {
         variable_binder(argument_bindings.as_ref().clone(), input.clone(), &mut env)?;
-        eval(&body, env)
+
+        let mut last_res = EnvItem::Data(Item::None);
+        for statement in body.iter() {
+            last_res = eval(&statement, &mut env)?;
+        }
+        Ok(last_res)
     })))
 }
 
 pub fn variable_binder(
     variables: Item,
     values: Item,
-    env: &mut Rc<Environment>,
+    env: &mut Environment,
 ) -> Result<(), error::EvalError> {
     match variables {
-        Item::Name(n) => match Rc::get_mut(env) {
-            Some(env) => {
-                env.assign(n, EnvItem::Data(values));
-                Ok(())
-            }
-            None => Err(error::EvalError {
-                code: error::EvalErrorCode::E0003,
-                message: "Could not get mutable access to the environment".into(),
-            }),
-        },
+        Item::Name(n) => {
+            env.assign(n, EnvItem::Data(values));
+            Ok(())
+        }
         Item::Cons(c) => {
-            let env = match Rc::get_mut(env) {
-                Some(e) => e,
-                None => {
-                    return Err(error::EvalError {
-                        code: error::EvalErrorCode::E0003,
-                        message: "Could not get mutable access to the environment".into(),
-                    });
-                }
-            };
             let variables: Vec<Item> = c.into();
             if let Item::Cons(v) = values {
                 let values: Vec<Item> = v.into();

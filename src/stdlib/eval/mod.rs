@@ -16,15 +16,15 @@ mod tests;
 /// an `EvalError`.
 ///
 /// The `cdr` will not be evaluated. That is up to the called function to do.
-pub fn eval(data: &Item, env: Rc<Environment>) -> Result<Output, error::EvalError> {
+pub fn eval(data: &Item, env: &mut Environment) -> Result<Output, error::EvalError> {
     match data {
         Item::Cons(list) => eval_function(list, env),
-        Item::Name(n) => eval_name(&n, env),
+        Item::Name(n) => eval_name(&n, &env),
         item => Ok(Output::Data(item.clone())),
     }
 }
 
-fn eval_name(name: &str, env: Rc<Environment>) -> Result<Output, error::EvalError> {
+fn eval_name(name: &str, env: &Environment) -> Result<Output, error::EvalError> {
     //if let Some(env) = env {
     match env.lookup(name) {
         Some(o) => Ok(o),
@@ -41,18 +41,19 @@ fn eval_name(name: &str, env: Rc<Environment>) -> Result<Output, error::EvalErro
     //}
 }
 
-fn eval_function(list: &Cons, env: Rc<Environment>) -> FunctionOutput {
+fn eval_function(list: &Cons, env: &mut Environment) -> FunctionOutput {
+    env.push();
     match list.car.as_ref() {
-        Item::Name(s) => match eval_name(s, env.clone())? {
-            Output::Function(f) => f(&list.cdr, Rc::new(Environment::new(Rc::downgrade(&env)))),
+        Item::Name(s) => match eval_name(s, env)? {
+            Output::Function(f) => f(&list.cdr, env),
             _ => Err(error::EvalError {
                 code: error::EvalErrorCode::E0004,
                 message: format!("Name '{}' is not bound to a function.", s),
             }),
         },
         Item::Cons(_) => {
-            if let Output::Function(f) = eval(&list.car, env.clone())? {
-                f(&list.car, Environment::rc_new(env))
+            if let Output::Function(f) = eval(&list.car, env)? {
+                f(&list.cdr, env)
             } else {
                 Err(error::EvalError {
                     code: error::EvalErrorCode::E0001,

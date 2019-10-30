@@ -2,7 +2,7 @@ use super::stdlib::error;
 use std::collections::HashMap;
 use std::default::Default;
 use std::fmt;
-use std::rc::{Rc, Weak};
+use std::rc::Rc;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Item {
@@ -18,7 +18,7 @@ impl fmt::Display for Item {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Item::Number(num) => write!(f, "{}", num),
-            Item::String(s) => write!(f, "{}", s),
+            Item::String(s) => write!(f, "\"{}\"", s),
             Item::Boolean(b) => write!(f, "{}", b),
             Item::Name(n) => write!(f, "{}", n),
             Item::Cons(c) => write!(f, "{}", c),
@@ -123,7 +123,7 @@ impl<'a> Iterator for ConsIter<'a> {
 
 pub type Output = EnvItem;
 pub type FunctionOutput = Result<EnvItem, error::EvalError>;
-type EnvItemFunction = dyn Fn(&Item, Rc<Environment>) -> FunctionOutput;
+type EnvItemFunction = dyn Fn(&Item, &mut Environment) -> FunctionOutput;
 
 #[derive(Clone)]
 pub enum EnvItem {
@@ -177,42 +177,40 @@ impl PartialEq for EnvItem {
 }
 
 pub struct Environment {
-    parent: Weak<Environment>,
-    variables: HashMap<String, EnvItem>,
+    variables: Vec<HashMap<String, EnvItem>>,
 }
 
 impl Default for Environment {
     fn default() -> Self {
         Environment {
-            parent: Weak::new(),
-            variables: HashMap::new(),
+            variables: vec![HashMap::new()],
         }
     }
 }
 
 impl Environment {
-    pub fn new(parent: Weak<Environment>) -> Environment {
-        Environment {
-            parent,
-            variables: HashMap::new(),
-        }
+    pub fn push(&mut self) {
+        self.variables.push(HashMap::new());
     }
 
-    pub fn rc_new(parent: Rc<Environment>) -> Rc<Environment> {
-        Rc::new(Environment {
-            parent: Rc::downgrade(&parent),
-            variables: HashMap::new(),
-        })
+    pub fn pop(&mut self) {
+        self.variables.pop();
     }
+
+    //pub fn rc_new(parent: Rc<Environment>) -> Rc<Environment> {
+    //    Rc::new(Environment {
+    //        parent: Rc::downgrade(&parent),
+    //        variables: HashMap::new(),
+    //    })
+    //}
 
     pub fn lookup(&self, key: &str) -> Option<EnvItem> {
-        if self.variables.contains_key(key) {
-            self.variables.get(key).cloned()
-        } else if let Some(out) = self.parent.upgrade() {
-            out.lookup(key)
-        } else {
-            None
+        for var in self.variables.iter().rev() {
+            if var.contains_key(key) {
+                return var.get(key).cloned();
+            }
         }
+        None
     }
 
     pub fn assign<T>(&mut self, key: T, value: EnvItem) -> Option<EnvItem>
@@ -220,6 +218,10 @@ impl Environment {
         T: Into<String>,
     {
         let key = key.into();
-        self.variables.insert(key, value)
+        if let Some(var) = self.variables.last_mut() {
+            var.insert(key, value)
+        } else {
+            None
+        }
     }
 }

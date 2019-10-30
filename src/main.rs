@@ -18,17 +18,14 @@ fn main() {
 
     println!("\n\n\n");
 
-    let program = "((lambda (x) x) 5)";
+    let program = "((lambda (x y) x y) 5 8)";
     println!("Program:\n{}", program);
-    let answer = stdlib::eval(
-        convert::convert(
-            parser::parse(&mut lexer::lex(program).unwrap()).expect("Could not parse the input"),
-        )
-        .first()
-        .unwrap(),
-        stdlib::stdlib(),
-    )
-    .expect("Could not evaluate the input");
+    let data = convert::convert(
+        parser::parse(&mut lexer::lex(program).unwrap()).expect("Could not parse the input"),
+    );
+    println!("Converted data:\n{}", data.first().unwrap());
+    let answer = stdlib::eval(&data.first().unwrap(), &mut stdlib::stdlib())
+        .expect("Could not evaluate the input");
     if let stdlib::EnvItem::Data(a) = answer {
         println!("Answer:\n{}", a);
     } else {
