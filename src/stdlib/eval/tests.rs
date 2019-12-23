@@ -1,35 +1,14 @@
 use super::*;
 use std::rc::Rc;
 
-fn addition(input: &Item, env: Rc<Environment>) -> FunctionOutput {
-    if let Item::Cons(list) = input {
-        let left = match eval(&list.car, env.clone())? {
-            Output::Data(Item::Number(n)) => n,
-            Output::Data(Item::None) => 0,
-            _ => panic!("Left constituent is not a number. (Only numbers supported for now)"),
-        };
-        let right = match list.cdr.as_ref() {
-            Item::Number(n) => *n,
-            Item::None => 0i64,
-            Item::Cons(_) => match addition(&list.cdr, env)? {
-                Output::Data(Item::Number(n)) => n,
-                _ => panic!("Right constituent is not a number. (Only numbers supported for now)"),
-            },
-            _ => panic!("Left constituent is not a number. (Only numbers supported for now)"),
-        };
-        Ok(Output::Data(Item::Number(left + right)))
-    } else {
-        panic!("Not a list of numbers");
-    }
-}
-
-fn build_environment() -> Rc<Environment> {
+fn build_environment() -> Environment {
     let mut env = Environment::default();
 
     env.assign("number", EnvItem::Data(Item::Number(1234)));
-    env.assign("+", EnvItem::Function(Rc::new(addition)));
+    env.assign("+", EnvItem::Function(Rc::new(math::addition)));
     env.assign("lambda", EnvItem::Function(Rc::new(lambda)));
-    Rc::new(env)
+
+    env
 }
 
 #[test]
@@ -37,7 +16,7 @@ fn eval_name_in_env() {
     let env = build_environment();
 
     assert_matches!(
-        eval_name("number", env),
+        eval_name("number", &env),
         Ok(Output::Data(Item::Number(1234)))
     );
 }
@@ -47,7 +26,7 @@ fn eval_name_not_in_env() {
     let env = build_environment();
 
     assert_matches!(
-        eval_name("nonsense", env),
+        eval_name("nonsense", &env),
         Err(error::EvalError {
             code: error::EvalErrorCode::E0002,
             ..
@@ -59,7 +38,7 @@ fn eval_name_not_in_env() {
 #[ignore]
 fn eval_name_no_env() {
     assert_matches!(
-        eval_name("nonsense", Rc::new(Environment::default())),
+        eval_name("nonsense", &Environment::default()),
         Err(error::EvalError {
             code: error::EvalErrorCode::E0003,
             ..
@@ -69,7 +48,7 @@ fn eval_name_no_env() {
 
 #[test]
 fn eval_function_with_name() {
-    let env = build_environment();
+    let mut env = build_environment();
 
     assert_matches!(
         eval_function(
@@ -83,7 +62,7 @@ fn eval_function_with_name() {
                     ))
                 ))
             ),
-            env
+            &mut env
         ),
         Ok(Output::Data(Item::Number(6)))
     );
@@ -92,24 +71,24 @@ fn eval_function_with_name() {
 #[test]
 fn eval_value() {
     assert_matches!(
-        eval(&Item::Number(42), Rc::new(Environment::default())),
+        eval(&Item::Number(42), &mut Environment::default()),
         Ok(Output::Data(Item::Number(42)))
     );
 }
 
 #[test]
 fn eval_with_name() {
-    let env = build_environment();
+    let mut env = build_environment();
 
     assert_matches!(
-        eval(&Item::Name("number".into()), env),
+        eval(&Item::Name("number".into()), &mut env),
         Ok(Output::Data(Item::Number(1234)))
     );
 }
 
 #[test]
 fn eval_cons() {
-    let env = build_environment();
+    let mut env = build_environment();
 
     assert_matches!(
         eval(
@@ -120,7 +99,7 @@ fn eval_cons() {
                     Item::Cons(Cons::new(Item::Number(1), Item::None))
                 ))
             )),
-            env
+            &mut env
         ),
         Ok(Output::Data(Item::Number(2)))
     );

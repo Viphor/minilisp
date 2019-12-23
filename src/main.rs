@@ -18,7 +18,11 @@ fn main() {
 
     println!("\n\n\n");
 
-    let program = "((lambda (x y) x y) 5 8)";
+    //let program = "((lambda (x y) x y) 5 8)";
+    //let program = "((lambda (x) (+ x x)) 5)";
+    //let program = "(eval '((lambda (x) (+ x x)) 5))";
+    let program = "'((lambda (x) (+ x x)) 5)";
+    //let program = "(quote true)";
     println!("Program:\n{}", program);
     let data = convert::convert(
         parser::parse(&mut lexer::lex(program).unwrap()).expect("Could not parse the input"),
@@ -31,6 +35,4 @@ fn main() {
     } else {
         println!("Answer (not pretty):\n{:?}", answer);
     }
-
-    println!("Hello, world!");
 }

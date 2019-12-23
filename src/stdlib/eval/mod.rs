@@ -25,7 +25,6 @@ pub fn eval(data: &Item, env: &mut Environment) -> Result<Output, error::EvalErr
 }
 
 fn eval_name(name: &str, env: &Environment) -> Result<Output, error::EvalError> {
-    //if let Some(env) = env {
     match env.lookup(name) {
         Some(o) => Ok(o),
         None => Err(error::EvalError {
@@ -33,12 +32,6 @@ fn eval_name(name: &str, env: &Environment) -> Result<Output, error::EvalError> 
             message: format!("Name '{}' is not bound.", name),
         }),
     }
-    //} else {
-    //    Err(error::EvalError {
-    //        code: error::EvalErrorCode::E0003,
-    //        message: String::from("Could not load the environment."),
-    //    })
-    //}
 }
 
 fn eval_function(list: &Cons, env: &mut Environment) -> FunctionOutput {
@@ -52,20 +45,18 @@ fn eval_function(list: &Cons, env: &mut Environment) -> FunctionOutput {
             }),
         },
         Item::Cons(_) => {
+            //match eval(&list.car, env)? {
+            //
+            //}
             if let Output::Function(f) = eval(&list.car, env)? {
                 f(&list.cdr, env)
             } else {
                 Err(error::EvalError {
                     code: error::EvalErrorCode::E0001,
-                    message: format!("'{:?}' cannot evaluate to a function.", list.car),
+                    message: format!("'{}' cannot evaluate to a function.", list.car),
                 })
             }
         }
-        //Ok(Output::Function(f)) => Ok(f(*list.cdr, Environment::new(env))),
-        //Ok(Output::Data(d)) => Err(error::EvalError {
-        //    code: error::EvalErrorCode::E0001,
-        //    message: format!("'{:?}' cannot evaluate to a function.", d),
-        //}),
         Item::None => Err(error::EvalError {
             code: error::EvalErrorCode::E0001,
             message: String::from("'None' cannot evaluate to a function."),

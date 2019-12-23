@@ -9,6 +9,7 @@ use std::rc::Rc;
 pub mod error;
 pub mod eval;
 pub mod lambda;
+pub mod math;
 
 pub use eval::eval;
 pub use lambda::lambda;
@@ -20,6 +21,7 @@ pub fn stdlib() -> Environment {
     env.assign("eval", EnvItem::Function(Rc::new(eval)));
     env.assign("def", EnvItem::Function(Rc::new(def)));
     env.assign("quote", EnvItem::Function(Rc::new(quote)));
+    env.assign("+", EnvItem::Function(Rc::new(math::addition)));
 
     env
 }
@@ -32,7 +34,18 @@ pub fn def(_params: &Item, _env: &mut Environment) -> FunctionOutput {
 }
 
 pub fn quote(params: &Item, _: &mut Environment) -> FunctionOutput {
-    Ok(Output::Data(params.clone()))
+    if let Item::Cons(c) = params {
+        if let Item::None = *c.cdr {
+            Ok(Output::Data(*c.car.clone()))
+        } else {
+            Err(error::EvalError {
+                code: error::EvalErrorCode::E0006,
+                message: "Only one argument is supported by quote".into(),
+            })
+        }
+    } else {
+        Ok(Output::Data(params.clone()))
+    }
 }
 
 //pub fn list(params: &Item, env: &mut Environment) -> FunctionOutput {

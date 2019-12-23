@@ -32,7 +32,8 @@ pub fn variable_binder(
 ) -> Result<(), error::EvalError> {
     match variables {
         Item::Name(n) => {
-            env.assign(n, EnvItem::Data(values));
+            let val = eval(&values, env)?;
+            env.assign(n, val);
             Ok(())
         }
         Item::Cons(c) => {
@@ -51,7 +52,10 @@ pub fn variable_binder(
                 }
                 for (i, var) in variables.iter().enumerate() {
                     match var {
-                        Item::Name(n) => env.assign(n, EnvItem::Data(values[i].clone())),
+                        Item::Name(n) => {
+                            let val = eval(&values[i], env)?;
+                            env.assign(n, val)
+                        }
                         e => {
                             return Err(error::EvalError {
                                 code: error::EvalErrorCode::E0003,
