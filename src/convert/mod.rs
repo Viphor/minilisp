@@ -12,35 +12,6 @@ pub fn convert(ast: AST) -> Vec<Item> {
     } else {
         vec![expression_val]
     }
-    // TODO Get this to work when iterators are implemented
-    //match expression_val {
-    //    None => return (result, env),
-    //    Some(e) => {
-    //        if let Some(Output::Data(Item::Cons(first))) = env.get(e) {
-    //            for i in first.clone().iter_ref(env.as_ref()) {
-    //                result.push(i.clone());
-    //            }
-    //        }
-    //    }
-    //}
-    //let mut expression_list = env.get(expression_val.unwrap());
-    //while let Some(Output::Data(Item::Cons(li))) = expression_list {
-    //    if let Some(content) = li.car {
-    //        result.push(content);
-    //    }
-    //    if let Some(cdr) = li.cdr {
-    //        expression_list = match env.get(cdr) {
-    //            Some(Output::Data(Item::Cons(_))) => env.get(cdr),
-    //            _ => {
-    //                result.push(cdr);
-    //                None
-    //            }
-    //        };
-    //    } else {
-    //        expression_list = None;
-    //    }
-    //}
-    //(result, env)
 }
 
 fn convert_compound(compound: ast::Compound) -> Item {

@@ -29,7 +29,6 @@ impl fmt::Display for Item {
 }
 
 pub type ConsElement = Item;
-//type ConsElementContainer<T> = Box<T>;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Cons {
@@ -45,11 +44,6 @@ impl Default for Cons {
         }
     }
 }
-
-//pub struct Cons {
-//    pub car: ConsElementContainer<ConsElement>,
-//    pub cdr: ConsElementContainer<ConsElement>,
-//}
 
 impl Cons {
     pub fn new(car: ConsElement, cdr: ConsElement) -> Cons {
@@ -73,11 +67,6 @@ impl Cons {
             data,
             is_null_terminated,
         }
-
-        //Cons {
-        //    car: ConsElementContainer::new(car),
-        //    cdr: ConsElementContainer::new(cdr),
-        //}
     }
 
     pub fn iter(&self) -> Iter<Item> {
@@ -117,30 +106,6 @@ impl Cons {
             is_null_terminated: self.is_null_terminated,
         }
     }
-
-    //pub fn iter(&self) -> ConsIter {
-    //    ConsIter {
-    //        current: Some(self),
-    //        special_case: None,
-    //    }
-    //}
-
-    //pub fn map<F>(&self, fun: F) -> Cons
-    //where
-    //    F: Fn(&ConsElement) -> ConsElement,
-    //{
-    //    let mut base = Cons::new(Item::None, Item::None);
-    //    let mut current = &mut base;
-    //    for elem in self.iter() {
-    //        current.car = ConsElementContainer::new(fun(elem));
-    //        current.cdr = ConsElementContainer::new(Item::Cons(Cons::new(Item::None, Item::None)));
-    //        if let Item::Cons(cdr) = current.cdr.as_mut() {
-    //            current = cdr;
-    //        };
-    //    }
-    //    current.cdr = ConsElementContainer::new(Item::None);
-    //    base
-    //}
 }
 
 impl fmt::Display for Cons {
@@ -169,59 +134,8 @@ impl fmt::Display for Cons {
 impl From<Cons> for Vec<Item> {
     fn from(item: Cons) -> Self {
         item.data
-        //let mut vec = Vec::new();
-        //let mut current = item;
-        //loop {
-        //    vec.push(current.car.as_ref().clone());
-        //    match current.cdr.as_ref().clone() {
-        //        Item::Cons(c) => current = c,
-        //        Item::None => break,
-        //        i => {
-        //            vec.push(i);
-        //            break;
-        //        }
-        //    }
-        //}
-        //vec
     }
 }
-
-//pub struct ConsIter<'a> {
-//    current: Option<&'a Cons>,
-//    special_case: Option<&'a Item>,
-//}
-//
-//impl<'a> Iterator for ConsIter<'a> {
-//    type Item = &'a Item;
-//
-//    fn next(&mut self) -> Option<Self::Item> {
-//        match self.current {
-//            Some(c) => {
-//                let res = &c.car;
-//                self.current = match &*c.cdr {
-//                    Item::Cons(cc) => Some(cc),
-//                    Item::None => None,
-//                    i => {
-//                        self.special_case = Some(i);
-//                        None
-//                    }
-//                };
-//                Some(res)
-//            }
-//            None => match self.special_case {
-//                Some(Item::None) => {
-//                    self.special_case = None;
-//                    None
-//                }
-//                Some(i) => {
-//                    self.special_case = None;
-//                    Some(i)
-//                }
-//                None => None,
-//            },
-//        }
-//    }
-//}
 
 pub type Output = EnvItem;
 pub type FunctionOutput = Result<EnvItem, error::EvalError>;
@@ -233,16 +147,6 @@ pub enum EnvItem {
     Data(Item),
     None,
 }
-
-//impl Clone for EnvItem {
-//    fn clone(&self) -> Self {
-//        match self {
-//            EnvItem::Function(_) => panic!("Cannot clone a function."),
-//            EnvItem::Data(i) => EnvItem::Data(i.clone()),
-//            EnvItem::None => EnvItem::None,
-//        }
-//    }
-//}
 
 impl fmt::Debug for EnvItem {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -291,21 +195,19 @@ impl Default for Environment {
 }
 
 impl Environment {
+    /// Pushes a new environment layer on top of the environment stack
     pub fn push(&mut self) {
         self.variables.push(HashMap::new());
     }
 
+    /// Pops the top layer of the environment stack
     pub fn pop(&mut self) {
         self.variables.pop();
     }
 
-    //pub fn rc_new(parent: Rc<Environment>) -> Rc<Environment> {
-    //    Rc::new(Environment {
-    //        parent: Rc::downgrade(&parent),
-    //        variables: HashMap::new(),
-    //    })
-    //}
-
+    /// Used for looking up a named value within the environment.
+    /// Starting from the top layer, which shadows the lower layers, and moves
+    /// down the stack. If no item is found, None is returned.
     pub fn lookup(&self, key: &str) -> Option<EnvItem> {
         for var in self.variables.iter().rev() {
             if var.contains_key(key) {
@@ -315,12 +217,29 @@ impl Environment {
         None
     }
 
+    /// This assigns a value to the key in the top layer of the environment
+    /// stack.
     pub fn assign<T>(&mut self, key: T, value: EnvItem) -> Option<EnvItem>
     where
         T: Into<String>,
     {
         let key = key.into();
         if let Some(var) = self.variables.last_mut() {
+            var.insert(key, value)
+        } else {
+            None
+        }
+    }
+
+    /// This assigns a value to the key in the bottom layer of the environment
+    /// stack. This is called define because this is defining a value for the
+    /// current runtime and not just the stack frame.
+    pub fn define<T>(&mut self, key: T, value: EnvItem) -> Option<EnvItem>
+    where
+        T: Into<String>,
+    {
+        let key = key.into();
+        if let Some(var) = self.variables.first_mut() {
             var.insert(key, value)
         } else {
             None

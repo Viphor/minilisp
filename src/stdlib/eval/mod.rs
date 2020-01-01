@@ -72,9 +72,6 @@ fn eval_function(list: &Cons, env: &mut Environment) -> FunctionOutput {
             }),
         },
         Item::Cons(_) => {
-            //match eval(&list.car, env)? {
-            //
-            //}
             if let Output::Function(f) = eval(list.car(), env)? {
                 f(&list.cdr(), env)
             } else {
