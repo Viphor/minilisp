@@ -12,13 +12,14 @@ pub mod lambda;
 pub mod math;
 
 pub use eval::eval;
+use eval::eval_wrapper;
 pub use lambda::lambda;
 
 pub fn stdlib() -> Environment {
     let mut env = Environment::default();
 
     env.assign("lambda", EnvItem::Function(Rc::new(lambda)));
-    env.assign("eval", EnvItem::Function(Rc::new(eval)));
+    env.assign("eval", EnvItem::Function(Rc::new(eval_wrapper)));
     env.assign("def", EnvItem::Function(Rc::new(def)));
     env.assign("quote", EnvItem::Function(Rc::new(quote)));
     env.assign("+", EnvItem::Function(Rc::new(math::addition)));
@@ -35,8 +36,8 @@ pub fn def(_params: &Item, _env: &mut Environment) -> FunctionOutput {
 
 pub fn quote(params: &Item, _: &mut Environment) -> FunctionOutput {
     if let Item::Cons(c) = params {
-        if let Item::None = *c.cdr {
-            Ok(Output::Data(*c.car.clone()))
+        if let Item::None = c.cdr() {
+            Ok(Output::Data(c.car().clone()))
         } else {
             Err(error::EvalError {
                 code: error::EvalErrorCode::E0006,

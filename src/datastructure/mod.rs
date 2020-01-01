@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::default::Default;
 use std::fmt;
 use std::rc::Rc;
+use std::slice::Iter;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Item {
@@ -28,28 +29,118 @@ impl fmt::Display for Item {
 }
 
 pub type ConsElement = Item;
-type ConsElementContainer<T> = Box<T>;
+//type ConsElementContainer<T> = Box<T>;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Cons {
-    pub car: ConsElementContainer<ConsElement>,
-    pub cdr: ConsElementContainer<ConsElement>,
+    data: Vec<ConsElement>,
+    is_null_terminated: bool,
 }
+
+impl Default for Cons {
+    fn default() -> Self {
+        Cons {
+            data: vec![ConsElement::None],
+            is_null_terminated: true,
+        }
+    }
+}
+
+//pub struct Cons {
+//    pub car: ConsElementContainer<ConsElement>,
+//    pub cdr: ConsElementContainer<ConsElement>,
+//}
 
 impl Cons {
     pub fn new(car: ConsElement, cdr: ConsElement) -> Cons {
+        let mut data = vec![car];
+        let is_null_terminated;
+        match cdr {
+            ConsElement::Cons(cons) => {
+                data.extend(cons.data.iter().cloned());
+                is_null_terminated = cons.is_null_terminated;
+            }
+            ConsElement::None => {
+                is_null_terminated = true;
+            }
+            _ => {
+                data.push(cdr);
+                is_null_terminated = false;
+            }
+        }
+
         Cons {
-            car: ConsElementContainer::new(car),
-            cdr: ConsElementContainer::new(cdr),
+            data,
+            is_null_terminated,
+        }
+
+        //Cons {
+        //    car: ConsElementContainer::new(car),
+        //    cdr: ConsElementContainer::new(cdr),
+        //}
+    }
+
+    pub fn iter(&self) -> Iter<Item> {
+        self.data.iter()
+    }
+
+    pub fn car(&self) -> &ConsElement {
+        &self.data[0]
+    }
+
+    pub fn cdr(&self) -> ConsElement {
+        match self.data.len() {
+            2 if !self.is_null_terminated => self.data[1].clone(),
+            1 => ConsElement::None,
+            0 => panic!("A Cons should never be empty! Contact your vendor. this is a bug"),
+            _ => ConsElement::Cons(Cons {
+                data: (&self.data[1..]).to_vec(),
+                is_null_terminated: self.is_null_terminated,
+            }),
         }
     }
 
-    pub fn iter(&self) -> ConsIter {
-        ConsIter {
-            current: Some(self),
-            special_case: None,
+    pub fn len(&self) -> usize {
+        self.data.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.data.len() == 1 && self.data[0] == ConsElement::None
+    }
+
+    pub fn map<F>(self, f: F) -> Cons
+    where
+        F: FnMut(&ConsElement) -> ConsElement,
+    {
+        Cons {
+            data: self.data.iter().map(f).collect(),
+            is_null_terminated: self.is_null_terminated,
         }
     }
+
+    //pub fn iter(&self) -> ConsIter {
+    //    ConsIter {
+    //        current: Some(self),
+    //        special_case: None,
+    //    }
+    //}
+
+    //pub fn map<F>(&self, fun: F) -> Cons
+    //where
+    //    F: Fn(&ConsElement) -> ConsElement,
+    //{
+    //    let mut base = Cons::new(Item::None, Item::None);
+    //    let mut current = &mut base;
+    //    for elem in self.iter() {
+    //        current.car = ConsElementContainer::new(fun(elem));
+    //        current.cdr = ConsElementContainer::new(Item::Cons(Cons::new(Item::None, Item::None)));
+    //        if let Item::Cons(cdr) = current.cdr.as_mut() {
+    //            current = cdr;
+    //        };
+    //    }
+    //    current.cdr = ConsElementContainer::new(Item::None);
+    //    base
+    //}
 }
 
 impl fmt::Display for Cons {
@@ -58,8 +149,18 @@ impl fmt::Display for Cons {
         for it in self.iter().take(1) {
             write!(f, "{}", it)?;
         }
-        for it in self.iter().skip(1) {
-            write!(f, " {}", it)?;
+        if self.len() > 2 {
+            for it in self.iter().skip(1).take(self.len() - 2) {
+                write!(f, " {}", it)?;
+            }
+        }
+        if !self.is_null_terminated {
+            write!(f, " .")?;
+        }
+        if self.len() > 1 {
+            for it in self.iter().skip(self.len() - 1) {
+                write!(f, " {}", it)?;
+            }
         }
         write!(f, ")")
     }
@@ -67,59 +168,60 @@ impl fmt::Display for Cons {
 
 impl From<Cons> for Vec<Item> {
     fn from(item: Cons) -> Self {
-        let mut vec = Vec::new();
-        let mut current = item;
-        loop {
-            vec.push(current.car.as_ref().clone());
-            match current.cdr.as_ref().clone() {
-                Item::Cons(c) => current = c,
-                Item::None => break,
-                i => {
-                    vec.push(i);
-                    break;
-                }
-            }
-        }
-        vec
+        item.data
+        //let mut vec = Vec::new();
+        //let mut current = item;
+        //loop {
+        //    vec.push(current.car.as_ref().clone());
+        //    match current.cdr.as_ref().clone() {
+        //        Item::Cons(c) => current = c,
+        //        Item::None => break,
+        //        i => {
+        //            vec.push(i);
+        //            break;
+        //        }
+        //    }
+        //}
+        //vec
     }
 }
 
-pub struct ConsIter<'a> {
-    current: Option<&'a Cons>,
-    special_case: Option<&'a Item>,
-}
-
-impl<'a> Iterator for ConsIter<'a> {
-    type Item = &'a Item;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.current {
-            Some(c) => {
-                let res = &c.car;
-                self.current = match &*c.cdr {
-                    Item::Cons(cc) => Some(cc),
-                    Item::None => None,
-                    i => {
-                        self.special_case = Some(i);
-                        None
-                    }
-                };
-                Some(res)
-            }
-            None => match self.special_case {
-                Some(Item::None) => {
-                    self.special_case = None;
-                    None
-                }
-                Some(i) => {
-                    self.special_case = None;
-                    Some(i)
-                }
-                None => None,
-            },
-        }
-    }
-}
+//pub struct ConsIter<'a> {
+//    current: Option<&'a Cons>,
+//    special_case: Option<&'a Item>,
+//}
+//
+//impl<'a> Iterator for ConsIter<'a> {
+//    type Item = &'a Item;
+//
+//    fn next(&mut self) -> Option<Self::Item> {
+//        match self.current {
+//            Some(c) => {
+//                let res = &c.car;
+//                self.current = match &*c.cdr {
+//                    Item::Cons(cc) => Some(cc),
+//                    Item::None => None,
+//                    i => {
+//                        self.special_case = Some(i);
+//                        None
+//                    }
+//                };
+//                Some(res)
+//            }
+//            None => match self.special_case {
+//                Some(Item::None) => {
+//                    self.special_case = None;
+//                    None
+//                }
+//                Some(i) => {
+//                    self.special_case = None;
+//                    Some(i)
+//                }
+//                None => None,
+//            },
+//        }
+//    }
+//}
 
 pub type Output = EnvItem;
 pub type FunctionOutput = Result<EnvItem, error::EvalError>;

@@ -20,9 +20,11 @@ fn main() {
 
     //let program = "((lambda (x y) x y) 5 8)";
     //let program = "((lambda (x) (+ x x)) 5)";
-    //let program = "(eval '((lambda (x) (+ x x)) 5))";
-    let program = "'((lambda (x) (+ x x)) 5)";
+    //let program = "(eval ((lambda (x) (+ x x)) 5))";
+    //let program = "'((lambda (x) (+ x x)) 5)";
+    let program = "(eval '((lambda (x) (+ x x)) 5))";
     //let program = "(quote true)";
+    //let program = "(lambda (x) x)";
     println!("Program:\n{}", program);
     let data = convert::convert(
         parser::parse(&mut lexer::lex(program).unwrap()).expect("Could not parse the input"),

@@ -20,4 +20,6 @@ pub enum EvalErrorCode {
     E0006,
     /// Not implemented yet
     E0007,
+    /// Unable to eval function
+    E0008,
 }

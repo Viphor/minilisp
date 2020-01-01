@@ -24,6 +24,33 @@ pub fn eval(data: &Item, env: &mut Environment) -> Result<Output, error::EvalErr
     }
 }
 
+/// This method is the one used within the language, which will first evaluate
+/// all the parameters, as this is the convention that all functions should do
+/// themselves.
+pub fn eval_wrapper(data: &Item, env: &mut Environment) -> FunctionOutput {
+    let param;
+    if let Item::Cons(cons) = data {
+        if cons.len() > 1 {
+            return Err(error::EvalError {
+                code: error::EvalErrorCode::E0006,
+                message: format!("Too many arguments. Expected: 1, found: {}", cons.len()),
+            });
+        } else {
+            param = eval(cons.car(), env)?;
+        }
+    } else {
+        param = eval(data, env)?;
+    }
+    match param {
+        EnvItem::Data(d) => eval(&d, env),
+        EnvItem::Function(_) => Err(error::EvalError {
+            code: error::EvalErrorCode::E0008,
+            message: "Function could not be evaluated".into(),
+        }),
+        EnvItem::None => Ok(Output::None),
+    }
+}
+
 fn eval_name(name: &str, env: &Environment) -> Result<Output, error::EvalError> {
     match env.lookup(name) {
         Some(o) => Ok(o),
@@ -36,9 +63,9 @@ fn eval_name(name: &str, env: &Environment) -> Result<Output, error::EvalError> 
 
 fn eval_function(list: &Cons, env: &mut Environment) -> FunctionOutput {
     env.push();
-    match list.car.as_ref() {
+    let res = match list.car() {
         Item::Name(s) => match eval_name(s, env)? {
-            Output::Function(f) => f(&list.cdr, env),
+            Output::Function(f) => f(&list.cdr(), env),
             _ => Err(error::EvalError {
                 code: error::EvalErrorCode::E0004,
                 message: format!("Name '{}' is not bound to a function.", s),
@@ -48,12 +75,12 @@ fn eval_function(list: &Cons, env: &mut Environment) -> FunctionOutput {
             //match eval(&list.car, env)? {
             //
             //}
-            if let Output::Function(f) = eval(&list.car, env)? {
-                f(&list.cdr, env)
+            if let Output::Function(f) = eval(list.car(), env)? {
+                f(&list.cdr(), env)
             } else {
                 Err(error::EvalError {
                     code: error::EvalErrorCode::E0001,
-                    message: format!("'{}' cannot evaluate to a function.", list.car),
+                    message: format!("'{}' cannot evaluate to a function.", list.car()),
                 })
             }
         }
@@ -65,5 +92,7 @@ fn eval_function(list: &Cons, env: &mut Environment) -> FunctionOutput {
             code: error::EvalErrorCode::E0005,
             message: String::from("Could not resolve the reference to car"),
         }),
-    }
+    };
+    env.pop();
+    res
 }

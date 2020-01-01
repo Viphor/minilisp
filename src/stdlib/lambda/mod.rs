@@ -8,14 +8,14 @@ pub fn lambda(params: &Item, _: &mut Environment) -> FunctionOutput {
     } else {
         panic!("A lambda expression must have a least a set of arguments and a body");
     }
-    let argument_bindings = cons.car;
-    let body = match cons.cdr.as_ref().clone() {
+    let argument_bindings = cons.car().clone();
+    let body = match cons.cdr() {
         Item::Cons(c) => c.into(),
         i => vec![i],
     };
 
     Ok(Output::Function(Rc::new(move |input, mut env| {
-        variable_binder(argument_bindings.as_ref().clone(), input.clone(), &mut env)?;
+        variable_binder(argument_bindings.clone(), input.clone(), &mut env)?;
 
         let mut last_res = EnvItem::Data(Item::None);
         for statement in body.iter() {
