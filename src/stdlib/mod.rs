@@ -23,6 +23,15 @@ pub fn stdlib() -> Environment {
     env.assign("def", EnvItem::Function(Rc::new(def)));
     env.assign("quote", EnvItem::Function(Rc::new(quote)));
     env.assign("+", EnvItem::Function(Rc::new(math::addition)));
+    env.assign("add", EnvItem::Function(Rc::new(math::addition)));
+    env.assign("-", EnvItem::Function(Rc::new(math::subtraction)));
+    env.assign("sub", EnvItem::Function(Rc::new(math::subtraction)));
+    env.assign("*", EnvItem::Function(Rc::new(math::multiplication)));
+    env.assign("mult", EnvItem::Function(Rc::new(math::multiplication)));
+    env.assign("/", EnvItem::Function(Rc::new(math::division)));
+    env.assign("div", EnvItem::Function(Rc::new(math::division)));
+    env.assign("%", EnvItem::Function(Rc::new(math::modulo)));
+    env.assign("mod", EnvItem::Function(Rc::new(math::modulo)));
 
     env
 }
