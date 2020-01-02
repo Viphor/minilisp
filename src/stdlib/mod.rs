@@ -36,11 +36,42 @@ pub fn stdlib() -> Environment {
     env
 }
 
-pub fn def(_params: &Item, _env: &mut Environment) -> FunctionOutput {
-    Err(error::EvalError {
-        code: error::EvalErrorCode::E0007,
-        message: "'def' is not yet implemented yet".into(),
-    })
+pub fn def(params: &Item, env: &mut Environment) -> FunctionOutput {
+    if let Item::Cons(c) = params {
+        if c.len() > 2 {
+            return Err(error::EvalError {
+                code: error::EvalErrorCode::E0006,
+                message: format!(
+                    "Wrong amount of arguments for 'def'. Expexted 2, found {}",
+                    c.len()
+                ),
+            });
+        }
+        let name;
+        if let Item::Name(n) = c.car() {
+            name = n;
+        } else {
+            return Err(error::EvalError {
+                code: error::EvalErrorCode::E0009,
+                message: format!("'{}' is not a name, and cannot be bound", c.car()),
+            });
+        }
+        if let Item::Cons(cdr) = c.cdr() {
+            let res = eval(cdr.car(), env)?;
+            env.define(name, res.clone());
+            Ok(res)
+        } else {
+            Err(error::EvalError {
+                code: error::EvalErrorCode::E0010,
+                message: "Could not parse second parameter".into(),
+            })
+        }
+    } else {
+        Err(error::EvalError {
+            code: error::EvalErrorCode::E0010,
+            message: "Could not parse paramters".into(),
+        })
+    }
 }
 
 pub fn quote(params: &Item, _: &mut Environment) -> FunctionOutput {

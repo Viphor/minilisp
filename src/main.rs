@@ -3,7 +3,8 @@ use rustyline::Editor;
 
 fn interactive() {
     let mut rl = Editor::<()>::new();
-    
+    let mut env = stdlib::stdlib();
+
     loop {
         let readline = rl.readline(">> ");
         match readline {
@@ -11,24 +12,24 @@ fn interactive() {
                 let mut line;
                 line = l.clone();
                 'repl: loop {
-                    match eval(line.clone()) {
+                    match eval(line.clone(), &mut env) {
                         Ok(result) => {
                             println!("{}", result);
                             break;
-                        },
+                        }
                         Err(_) => match rl.readline(".. ") {
                             Ok(l) => {
                                 line.push('\n');
                                 line.push_str(&l);
-                            },
+                            }
                             Err(_) => {
                                 println!("An error occurred");
                                 break 'repl;
-                            },
-                        }
+                            }
+                        },
                     }
                 }
-            },
+            }
             Err(_) => {
                 println!("An error occurred");
                 break;
@@ -37,12 +38,10 @@ fn interactive() {
     }
 }
 
-fn eval(input: String) -> Result<String, parser::error::ParserError> {
-    let data = convert::convert(
-        parser::parse(&mut lexer::lex(&input).unwrap())?,
-    );
+fn eval(input: String, env: &mut stdlib::Environment) -> Result<String, parser::error::ParserError> {
+    let data = convert::convert(parser::parse(&mut lexer::lex(&input).unwrap())?);
     //println!("Converted data:\n{}", data.first().unwrap());
-    let answer = stdlib::eval(&data.first().unwrap(), &mut stdlib::stdlib())
+    let answer = stdlib::eval(&data.first().unwrap(), env)
         .expect("Could not evaluate the input");
     Ok(if let stdlib::EnvItem::Data(a) = answer {
         format!("{}", a)
@@ -88,7 +87,6 @@ fn main() {
     } else {
         println!("Answer (not pretty):\n{:?}", answer);
     }
-
 
     interactive();
 }

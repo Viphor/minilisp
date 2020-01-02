@@ -5,16 +5,22 @@ pub fn addition(input: &Item, env: &mut Environment) -> FunctionOutput {
         let left = match eval(list.car(), env)? {
             Output::Data(Item::Number(n)) => n,
             Output::Data(Item::None) => 0,
-            _ => panic!("Addition: Left constituent is not a number. (Only numbers supported for now)"),
+            _ => panic!(
+                "Addition: Left constituent is not a number. (Only numbers supported for now)"
+            ),
         };
         let right = match list.cdr() {
             Item::Number(n) => n,
             Item::None => 0i64,
             Item::Cons(_) => match addition(&list.cdr(), env)? {
                 Output::Data(Item::Number(n)) => n,
-                _ => panic!("Addition: Right constituent is not a number. (Only numbers supported for now)"),
+                _ => panic!(
+                    "Addition: Right constituent is not a number. (Only numbers supported for now)"
+                ),
             },
-            _ => panic!("Addition: Right constituent is not a number. (Only numbers supported for now)"),
+            _ => panic!(
+                "Addition: Right constituent is not a number. (Only numbers supported for now)"
+            ),
         };
         Ok(Output::Data(Item::Number(left + right)))
     } else {
@@ -27,7 +33,9 @@ pub fn subtraction(input: &Item, env: &mut Environment) -> FunctionOutput {
         let left = match eval(list.car(), env)? {
             Output::Data(Item::Number(n)) => n,
             Output::Data(Item::None) => 0,
-            _ => panic!("Subtraction: Left constituent is not a number. (Only numbers supported for now)"),
+            _ => panic!(
+                "Subtraction: Left constituent is not a number. (Only numbers supported for now)"
+            ),
         };
         let right = match list.cdr() {
             Item::Number(n) => n,
@@ -74,16 +82,22 @@ pub fn division(input: &Item, env: &mut Environment) -> FunctionOutput {
         let left = match eval(list.car(), env)? {
             Output::Data(Item::Number(n)) => n,
             Output::Data(Item::None) => 0,
-            _ => panic!("Division: Left constituent is not a number. (Only numbers supported for now)"),
+            _ => panic!(
+                "Division: Left constituent is not a number. (Only numbers supported for now)"
+            ),
         };
         let right = match list.cdr() {
             Item::Number(n) => n,
             Item::None => 0i64,
             Item::Cons(c) => match eval(c.car(), env)? {
                 Output::Data(Item::Number(cn)) => cn,
-                _ => panic!("Division: Right constituent is not a number. (Only numbers supported for now)"),
+                _ => panic!(
+                    "Division: Right constituent is not a number. (Only numbers supported for now)"
+                ),
             },
-            _ => panic!("Division: Right constituent is not a number. (Only numbers supported for now)"),
+            _ => panic!(
+                "Division: Right constituent is not a number. (Only numbers supported for now)"
+            ),
         };
         Ok(Output::Data(Item::Number(left / right)))
     } else {
@@ -99,16 +113,22 @@ pub fn modulo(input: &Item, env: &mut Environment) -> FunctionOutput {
         let left = match eval(list.car(), env)? {
             Output::Data(Item::Number(n)) => n,
             Output::Data(Item::None) => 0,
-            _ => panic!("Modulo: Left constituent is not a number. (Only numbers supported for now)"),
+            _ => {
+                panic!("Modulo: Left constituent is not a number. (Only numbers supported for now)")
+            }
         };
         let right = match list.cdr() {
             Item::Number(n) => n,
             Item::None => 0i64,
             Item::Cons(c) => match eval(c.car(), env)? {
                 Output::Data(Item::Number(cn)) => cn,
-                _ => panic!("Modulo: Right constituent is not a number. (Only numbers supported for now)"),
+                _ => panic!(
+                    "Modulo: Right constituent is not a number. (Only numbers supported for now)"
+                ),
             },
-            _ => panic!("Modulo: Right constituent is not a number. (Only numbers supported for now)"),
+            _ => panic!(
+                "Modulo: Right constituent is not a number. (Only numbers supported for now)"
+            ),
         };
         Ok(Output::Data(Item::Number(left % right)))
     } else {

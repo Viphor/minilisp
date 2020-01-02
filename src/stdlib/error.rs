@@ -22,4 +22,8 @@ pub enum EvalErrorCode {
     E0007,
     /// Unable to eval function
     E0008,
+    /// Not a `Name`
+    E0009,
+    /// Parameter list unparseable
+    E0010,
 }
