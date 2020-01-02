@@ -23,7 +23,7 @@ use super::lexer::Symbol;
 mod tests;
 
 pub mod ast;
-mod error;
+pub mod error;
 
 /// Parses a `Vec<lexer::Symbol>` into an `parser::ast::AST`
 ///

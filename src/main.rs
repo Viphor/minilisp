@@ -1,4 +1,55 @@
 use minilisp::{convert, lexer, parser, stdlib};
+use rustyline::Editor;
+
+fn interactive() {
+    let mut rl = Editor::<()>::new();
+    
+    loop {
+        let readline = rl.readline(">> ");
+        match readline {
+            Ok(l) => {
+                let mut line;
+                line = l.clone();
+                'repl: loop {
+                    match eval(line.clone()) {
+                        Ok(result) => {
+                            println!("{}", result);
+                            break;
+                        },
+                        Err(_) => match rl.readline(".. ") {
+                            Ok(l) => {
+                                line.push('\n');
+                                line.push_str(&l);
+                            },
+                            Err(_) => {
+                                println!("An error occurred");
+                                break 'repl;
+                            },
+                        }
+                    }
+                }
+            },
+            Err(_) => {
+                println!("An error occurred");
+                break;
+            }
+        }
+    }
+}
+
+fn eval(input: String) -> Result<String, parser::error::ParserError> {
+    let data = convert::convert(
+        parser::parse(&mut lexer::lex(&input).unwrap())?,
+    );
+    //println!("Converted data:\n{}", data.first().unwrap());
+    let answer = stdlib::eval(&data.first().unwrap(), &mut stdlib::stdlib())
+        .expect("Could not evaluate the input");
+    Ok(if let stdlib::EnvItem::Data(a) = answer {
+        format!("{}", a)
+    } else {
+        format!("{:?}", answer)
+    })
+}
 
 fn main() {
     let test = "(test '(\"cool \\\"string\\\" stuff\" 123))";
@@ -37,4 +88,7 @@ fn main() {
     } else {
         println!("Answer (not pretty):\n{:?}", answer);
     }
+
+
+    interactive();
 }
