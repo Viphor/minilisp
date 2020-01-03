@@ -1,5 +1,17 @@
 use minilisp::{convert, lexer, parser, stdlib};
 use rustyline::Editor;
+use std::{env, fs};
+
+fn eval_files(files: Vec<String>) {
+    let mut env = stdlib::stdlib();
+    for file in files.iter() {
+        let content = fs::read_to_string(file);
+        assert!(content.is_ok(), "Could not read file '{}'", file);
+        let result = eval(content.unwrap(), &mut env);
+        assert!(result.is_ok(), "Could not evaluate file '{}'", file);
+        println!("{}", result.unwrap());
+    }
+}
 
 fn interactive() {
     let mut rl = Editor::<()>::new();
@@ -60,42 +72,11 @@ fn eval(
 }
 
 fn main() {
-    //let test = "(test '(\"cool \\\"string\\\" stuff\" 123))";
-    //println!("String to test:\n{}\n", test);
-    //let mut lexed = lexer::lex(test).unwrap();
-    //println!("Lexer output:\n{:?}\n", lexed);
-    //let parsed = parser::parse(&mut lexed);
-    //println!("Parser output:\n{:?}\n", parsed);
+    let args: Vec<String> = env::args().skip(1).collect();
 
-    //let converted = convert::convert(parsed.expect("Could not parse the input"));
-    //println!("Converter output:\n{:?}\n", converted);
-
-    //println!("Converted output in pretty print:");
-    //for i in converted.iter() {
-    //    println!("{}", i);
-    //}
-
-    //println!("\n\n\n");
-
-    ////let program = "((lambda (x y) x y) 5 8)";
-    ////let program = "((lambda (x) (+ x x)) 5)";
-    ////let program = "(eval ((lambda (x) (+ x x)) 5))";
-    ////let program = "'((lambda (x) (+ x x)) 5)";
-    //let program = "(eval '((lambda (x) (+ x x)) 5))";
-    ////let program = "(quote true)";
-    ////let program = "(lambda (x) x)";
-    //println!("Program:\n{}", program);
-    //let data = convert::convert(
-    //    parser::parse(&mut lexer::lex(program).unwrap()).expect("Could not parse the input"),
-    //);
-    //println!("Converted data:\n{}", data.first().unwrap());
-    //let answer = stdlib::eval(&data.first().unwrap(), &mut stdlib::stdlib())
-    //    .expect("Could not evaluate the input");
-    //if let stdlib::EnvItem::Data(a) = answer {
-    //    println!("Answer:\n{}", a);
-    //} else {
-    //    println!("Answer (not pretty):\n{:?}", answer);
-    //}
-
-    interactive();
+    if !args.is_empty() {
+        eval_files(args);
+    } else {
+        interactive();
+    }
 }
