@@ -27,3 +27,20 @@ pub enum EvalErrorCode {
     /// Parameter list unparseable
     E0010,
 }
+
+pub fn mismatch_arguments(method: &str, expected: usize, found: usize) -> EvalError {
+    EvalError {
+        code: EvalErrorCode::E0006,
+        message: format!(
+            "Wrong amount of arguments for '{}'. Expexted {}, found {}",
+            method, expected, found
+        ),
+    }
+}
+
+pub fn unparseable_arguments(method: &str) -> EvalError {
+    EvalError {
+        code: EvalErrorCode::E0010,
+        message: format!("Could not parse arguments for '{}'", method),
+    }
+}

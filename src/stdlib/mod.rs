@@ -6,9 +6,11 @@
 pub use super::datastructure::{Cons, EnvItem, Environment, FunctionOutput, Item, Output};
 use std::rc::Rc;
 
+pub mod control;
 pub mod error;
 pub mod eval;
 pub mod lambda;
+pub mod list;
 pub mod math;
 
 pub use eval::eval;
@@ -32,6 +34,12 @@ pub fn stdlib() -> Environment {
     env.assign("div", EnvItem::Function(Rc::new(math::division)));
     env.assign("%", EnvItem::Function(Rc::new(math::modulo)));
     env.assign("mod", EnvItem::Function(Rc::new(math::modulo)));
+    env.assign("cons", EnvItem::Function(Rc::new(list::cons)));
+    env.assign("if", EnvItem::Function(Rc::new(control::if_control)));
+    env.assign("<", EnvItem::Function(Rc::new(math::less_than)));
+    env.assign("lt", EnvItem::Function(Rc::new(math::less_than)));
+    env.assign(">", EnvItem::Function(Rc::new(math::greater_than)));
+    env.assign("gt", EnvItem::Function(Rc::new(math::greater_than)));
 
     env
 }

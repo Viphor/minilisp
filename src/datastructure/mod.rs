@@ -28,6 +28,19 @@ impl fmt::Display for Item {
     }
 }
 
+impl From<Item> for bool {
+    fn from(item: Item) -> Self {
+        match item {
+            Item::Number(num) => num != 0,
+            Item::String(s) => !s.is_empty(),
+            Item::Boolean(b) => b,
+            Item::Name(_) => true,
+            Item::Cons(c) => !c.is_empty(),
+            Item::None => false,
+        }
+    }
+}
+
 pub type ConsElement = Item;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -86,6 +99,22 @@ impl Cons {
                 data: (&self.data[1..]).to_vec(),
                 is_null_terminated: self.is_null_terminated,
             }),
+        }
+    }
+
+    pub fn cadr(&self) -> &ConsElement {
+        if self.len() > 2 || (self.len() > 1 && self.is_null_terminated) {
+            &self.data[1]
+        } else {
+            panic!("Not enough elements!"); // TODO This should be handled more gracefully
+        }
+    }
+
+    pub fn caddr(&self) -> &ConsElement {
+        if self.len() > 3 || (self.len() > 2 && self.is_null_terminated) {
+            &self.data[2]
+        } else {
+            panic!("Not enough elements!"); // TODO This should be handled more gracefully
         }
     }
 
