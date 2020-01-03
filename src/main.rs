@@ -39,16 +39,24 @@ fn interactive() {
     }
 }
 
-fn eval(input: String, env: &mut stdlib::Environment) -> Result<String, parser::error::ParserError> {
+fn eval(
+    input: String,
+    env: &mut stdlib::Environment,
+) -> Result<String, parser::error::ParserError> {
     let data = convert::convert(parser::parse(&mut lexer::lex(&input).unwrap())?);
-    //println!("Converted data:\n{}", data.first().unwrap());
-    let answer = stdlib::eval(&data.first().unwrap(), env)
-        .expect("Could not evaluate the input");
-    Ok(if let stdlib::EnvItem::Data(a) = answer {
-        format!("{}", a)
-    } else {
-        format!("{:?}", answer)
-    })
+
+    Ok(data
+        .iter()
+        .map(|d| {
+            let answer = stdlib::eval(d, env).expect("Could not evaluate the input");
+            if let stdlib::EnvItem::Data(a) = answer {
+                format!("{}", a)
+            } else {
+                format!("{:?}", answer)
+            }
+        })
+        .collect::<Vec<String>>()
+        .join("\n"))
 }
 
 fn main() {
