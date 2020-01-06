@@ -53,43 +53,44 @@ pub fn eval_wrapper(data: &Item, env: &mut Environment) -> FunctionOutput {
 
 fn eval_name(name: &str, env: &Environment) -> Result<Output, error::EvalError> {
     match env.lookup(name) {
-        Some(o) => Ok(o),
-        None => Err(error::EvalError {
+        EnvItem::None => Err(error::EvalError {
             code: error::EvalErrorCode::E0002,
             message: format!("Name '{}' is not bound.", name),
         }),
+        o => Ok(o),
     }
 }
 
 fn eval_function(list: &Cons, env: &mut Environment) -> FunctionOutput {
-    env.push();
-    let res = match list.car() {
-        Item::Name(s) => match eval_name(s, env)? {
-            Output::Function(f) => f(&list.cdr(), env),
-            _ => Err(error::EvalError {
-                code: error::EvalErrorCode::E0004,
-                message: format!("Name '{}' is not bound to a function.", s),
-            }),
-        },
-        Item::Cons(_) => {
-            if let Output::Function(f) = eval(list.car(), env)? {
-                f(&list.cdr(), env)
-            } else {
-                Err(error::EvalError {
-                    code: error::EvalErrorCode::E0001,
-                    message: format!("'{}' cannot evaluate to a function.", list.car()),
-                })
-            }
-        }
-        Item::None => Err(error::EvalError {
-            code: error::EvalErrorCode::E0001,
-            message: String::from("'None' cannot evaluate to a function."),
-        }),
-        _ => Err(error::EvalError {
-            code: error::EvalErrorCode::E0005,
-            message: String::from("Could not resolve the reference to car"),
-        }),
-    };
-    env.pop();
-    res
+    //env.push();
+    //let res = match list.car() {
+    //    Item::Name(s) => match eval_name(s, env)? {
+    //        Output::Function(f) => f(&list.cdr(), env),
+    //        _ => Err(error::EvalError {
+    //            code: error::EvalErrorCode::E0004,
+    //            message: format!("Name '{}' is not bound to a function.", s),
+    //        }),
+    //    },
+    //    Item::Cons(_) => {
+    //        if let Output::Function(f) = eval(list.car(), env)? {
+    //            f(&list.cdr(), env)
+    //        } else {
+    //            Err(error::EvalError {
+    //                code: error::EvalErrorCode::E0001,
+    //                message: format!("'{}' cannot evaluate to a function.", list.car()),
+    //            })
+    //        }
+    //    }
+    //    Item::None => Err(error::EvalError {
+    //        code: error::EvalErrorCode::E0001,
+    //        message: String::from("'None' cannot evaluate to a function."),
+    //    }),
+    //    _ => Err(error::EvalError {
+    //        code: error::EvalErrorCode::E0005,
+    //        message: String::from("Could not resolve the reference to car"),
+    //    }),
+    //};
+    //env.pop();
+    //res
+    unimplemented!();
 }

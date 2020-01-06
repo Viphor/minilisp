@@ -7,3 +7,4 @@ pub mod datastructure;
 pub mod lexer;
 pub mod parser;
 pub mod stdlib;
+pub mod vm;

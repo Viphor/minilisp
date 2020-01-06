@@ -1,4 +1,5 @@
 use super::stdlib::error;
+use super::vm::Machine;
 use std::collections::HashMap;
 use std::default::Default;
 use std::fmt;
@@ -166,13 +167,23 @@ impl From<Cons> for Vec<Item> {
     }
 }
 
+impl From<Vec<Item>> for Cons {
+    fn from(list: Vec<Item>) -> Self {
+        Cons {
+            data: list,
+            is_null_terminated: true,
+        }
+    }
+}
+
 pub type Output = EnvItem;
 pub type FunctionOutput = Result<EnvItem, error::EvalError>;
-type EnvItemFunction = dyn Fn(&Item, &mut Environment) -> FunctionOutput;
+pub type EnvItemFunction = dyn Fn(&mut Machine, Vec<EnvItem>) -> FunctionOutput;
+pub type EnvItemFunctionWrapped = Rc<EnvItemFunction>;
 
 #[derive(Clone)]
 pub enum EnvItem {
-    Function(Rc<EnvItemFunction>),
+    Function(EnvItemFunctionWrapped),
     Data(Item),
     None,
 }
@@ -237,13 +248,16 @@ impl Environment {
     /// Used for looking up a named value within the environment.
     /// Starting from the top layer, which shadows the lower layers, and moves
     /// down the stack. If no item is found, None is returned.
-    pub fn lookup(&self, key: &str) -> Option<EnvItem> {
+    pub fn lookup(&self, key: &str) -> EnvItem {
         for var in self.variables.iter().rev() {
             if var.contains_key(key) {
-                return var.get(key).cloned();
+                return match var.get(key) {
+                    Some(item) => item.clone(),
+                    None => EnvItem::None,
+                };
             }
         }
-        None
+        EnvItem::None
     }
 
     /// This assigns a value to the key in the top layer of the environment
