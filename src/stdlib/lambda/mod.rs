@@ -26,67 +26,67 @@ pub fn lambda(_params: &Item, _: &mut Environment) -> FunctionOutput {
     //})))
 }
 
-pub fn variable_binder(
-    variables: Item,
-    values: Item,
-    env: &mut Environment,
-) -> Result<(), error::EvalError> {
-    match variables {
-        Item::Name(n) => {
-            let val = eval(&values, env)?;
-            env.assign(n, val);
-            Ok(())
-        }
-        Item::Cons(c) => {
-            let variables: Vec<Item> = c.into();
-            if let Item::Cons(v) = values {
-                let values: Vec<Item> = v.into();
-                if variables.len() != values.len() {
-                    return Err(error::EvalError {
-                        code: error::EvalErrorCode::E0006,
-                        message: format!(
-                            "Found {} parameters, expected {}",
-                            values.len(),
-                            variables.len()
-                        ),
-                    });
-                }
-                for (i, var) in variables.iter().enumerate() {
-                    match var {
-                        Item::Name(n) => {
-                            let val = eval(&values[i], env)?;
-                            env.assign(n, val)
-                        }
-                        e => {
-                            return Err(error::EvalError {
-                                code: error::EvalErrorCode::E0003,
-                                message: format!("'{:?}' is not a valid variable name", e),
-                            });
-                        }
-                    };
-                }
-            } else if variables.len() > 1 {
-                return Err(error::EvalError {
-                    code: error::EvalErrorCode::E0006,
-                    message: format!("'{:?}'", values),
-                });
-            };
-
-            Ok(())
-        }
-        Item::None => {
-            if let Item::None = values {
-                Ok(())
-            } else {
-                Err(error::EvalError {
-                    code: error::EvalErrorCode::E0006,
-                    message: "Too many arguments".into(),
-                })
-            }
-        }
-        i => Err(error::EvalError {
-            code: error::EvalErrorCode::E0006,
-            message: format!("'{:?}' is not a valid parameter name", i),
-        }),
-    }
-}
+//pub fn variable_binder(
+//    variables: Item,
+//    values: Item,
+//    env: &mut Environment,
+//) -> Result<(), error::EvalError> {
+//    match variables {
+//        Item::Name(n) => {
+//            let val = eval(&values, env)?;
+//            env.assign(n, val);
+//            Ok(())
+//        }
+//        Item::Cons(c) => {
+//            let variables: Vec<Item> = c.into();
+//            if let Item::Cons(v) = values {
+//                let values: Vec<Item> = v.into();
+//                if variables.len() != values.len() {
+//                    return Err(error::EvalError {
+//                        code: error::EvalErrorCode::E0006,
+//                        message: format!(
+//                            "Found {} parameters, expected {}",
+//                            values.len(),
+//                            variables.len()
+//                        ),
+//                    });
+//                }
+//                for (i, var) in variables.iter().enumerate() {
+//                    match var {
+//                        Item::Name(n) => {
+//                            let val = eval(&values[i], env)?;
+//                            env.assign(n, val)
+//                        }
+//                        e => {
+//                            return Err(error::EvalError {
+//                                code: error::EvalErrorCode::E0003,
+//                                message: format!("'{:?}' is not a valid variable name", e),
+//                            });
+//                        }
+//                    };
+//                }
+//            } else if variables.len() > 1 {
+//                return Err(error::EvalError {
+//                    code: error::EvalErrorCode::E0006,
+//                    message: format!("'{:?}'", values),
+//                });
+//            };
+//
+//            Ok(())
+//        }
+//        Item::None => {
+//            if let Item::None = values {
+//                Ok(())
+//            } else {
+//                Err(error::EvalError {
+//                    code: error::EvalErrorCode::E0006,
+//                    message: "Too many arguments".into(),
+//                })
+//            }
+//        }
+//        i => Err(error::EvalError {
+//            code: error::EvalErrorCode::E0006,
+//            message: format!("'{:?}' is not a valid parameter name", i),
+//        }),
+//    }
+//}

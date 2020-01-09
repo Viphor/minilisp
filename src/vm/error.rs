@@ -1,5 +1,6 @@
 use super::super::stdlib::error::EvalError;
 
+#[derive(Debug)]
 pub struct VMError {
     message: String,
 }

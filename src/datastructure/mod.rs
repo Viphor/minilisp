@@ -6,9 +6,11 @@ use std::fmt;
 use std::rc::Rc;
 use std::slice::Iter;
 
+pub type Number = i64;
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum Item {
-    Number(i64),
+    Number(Number),
     String(String),
     Boolean(bool),
     Name(String),
@@ -114,6 +116,14 @@ impl Cons {
     pub fn caddr(&self) -> &ConsElement {
         if self.len() > 3 || (self.len() > 2 && self.is_null_terminated) {
             &self.data[2]
+        } else {
+            panic!("Not enough elements!"); // TODO This should be handled more gracefully
+        }
+    }
+
+    pub fn cadddr(&self) -> &ConsElement {
+        if self.len() > 4 || (self.len() > 3 && self.is_null_terminated) {
+            &self.data[3]
         } else {
             panic!("Not enough elements!"); // TODO This should be handled more gracefully
         }
@@ -242,7 +252,9 @@ impl Environment {
 
     /// Pops the top layer of the environment stack
     pub fn pop(&mut self) {
-        self.variables.pop();
+        if self.variables.len() > 1 {
+            self.variables.pop();
+        }
     }
 
     /// Used for looking up a named value within the environment.
@@ -283,7 +295,10 @@ impl Environment {
     {
         let key = key.into();
         if let Some(var) = self.variables.first_mut() {
-            var.insert(key, value)
+            println!("mark!");
+            let res = var.insert(key, value);
+            println!("{:?}", res);
+            res
         } else {
             None
         }

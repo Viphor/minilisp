@@ -1,191 +1,82 @@
 use super::*;
 
-pub fn addition(input: &Item, env: &mut Environment) -> FunctionOutput {
-    if let Item::Cons(list) = input {
-        let left = match eval(list.car(), env)? {
-            Output::Data(Item::Number(n)) => n,
-            Output::Data(Item::None) => 0,
-            _ => panic!(
-                "Addition: Left constituent is not a number. (Only numbers supported for now)"
-            ),
-        };
-        let right = match list.cdr() {
-            Item::Number(n) => n,
-            Item::None => 0i64,
-            Item::Cons(_) => match addition(&list.cdr(), env)? {
-                Output::Data(Item::Number(n)) => n,
-                _ => panic!(
-                    "Addition: Right constituent is not a number. (Only numbers supported for now)"
-                ),
-            },
-            _ => panic!(
-                "Addition: Right constituent is not a number. (Only numbers supported for now)"
-            ),
-        };
-        Ok(Output::Data(Item::Number(left + right)))
-    } else {
-        panic!("Addition: Not a list of numbers");
+fn get_number(item: &EnvItem) -> Result<Number, error::EvalError> {
+    match item {
+        EnvItem::Data(Item::Number(n)) => Ok(*n),
+        _ => Err(error::EvalError {
+            message: "Addition: Only supports numbers for now".into(),
+            code: error::EvalErrorCode::E0010,
+        }),
     }
 }
 
-pub fn subtraction(input: &Item, env: &mut Environment) -> FunctionOutput {
-    if let Item::Cons(list) = input {
-        let left = match eval(list.car(), env)? {
-            Output::Data(Item::Number(n)) => n,
-            Output::Data(Item::None) => 0,
-            _ => panic!(
-                "Subtraction: Left constituent is not a number. (Only numbers supported for now)"
-            ),
-        };
-        let right = match list.cdr() {
-            Item::Number(n) => n,
-            Item::None => 0i64,
-            Item::Cons(_) => match addition(&list.cdr(), env)? {
-                Output::Data(Item::Number(n)) => n,
-                _ => panic!("Subtraction: Right constituent is not a number. (Only numbers supported for now)"),
-            },
-            _ => panic!("Subtraction: Right constituent is not a number. (Only numbers supported for now)"),
-        };
-        Ok(Output::Data(Item::Number(left - right)))
+pub fn addition(_machine: &mut Machine, args: Vec<EnvItem>) -> FunctionOutput {
+    let mut sum = 0;
+    for item in args.iter() {
+        sum += get_number(item)?;
+    }
+    Ok(Output::Data(Item::Number(sum)))
+}
+
+pub fn subtraction(_machine: &mut Machine, args: Vec<EnvItem>) -> FunctionOutput {
+    if args.is_empty() {
+        return Err(error::EvalError {
+            message: "Subtraction: No arguments supplied".into(),
+            code: error::EvalErrorCode::E0010,
+        });
+    }
+    let mut args = args.iter();
+    let mut sum = get_number(args.next().unwrap())?;
+    for item in args {
+        sum -= get_number(item)?;
+    }
+    Ok(Output::Data(Item::Number(sum)))
+}
+
+pub fn multiplication(_machine: &mut Machine, args: Vec<EnvItem>) -> FunctionOutput {
+    let mut sum = 1;
+    for item in args.iter() {
+        sum *= get_number(item)?;
+    }
+    Ok(Output::Data(Item::Number(sum)))
+}
+
+pub fn division(_machine: &mut Machine, args: Vec<EnvItem>) -> FunctionOutput {
+    if args.len() != 2 {
+        Err(error::mismatch_arguments("division", 2, args.len()))
     } else {
-        panic!("Subtraction: Not a list of numbers");
+        Ok(Output::Data(Item::Number(
+            get_number(&args[0])? / get_number(&args[1])?,
+        )))
     }
 }
 
-pub fn multiplication(input: &Item, env: &mut Environment) -> FunctionOutput {
-    if let Item::Cons(list) = input {
-        let left = match eval(list.car(), env)? {
-            Output::Data(Item::Number(n)) => n,
-            Output::Data(Item::None) => 0,
-            _ => panic!("Multiplication: Left constituent is not a number. (Only numbers supported for now)"),
-        };
-        let right = match list.cdr() {
-            Item::Number(n) => n,
-            Item::None => 1i64,
-            Item::Cons(_) => match multiplication(&list.cdr(), env)? {
-                Output::Data(Item::Number(n)) => n,
-                _ => panic!("Multiplication: Right constituent is not a number. (Only numbers supported for now)"),
-            },
-            _ => panic!("Multiplication: Right constituent is not a number. (Only numbers supported for now)"),
-        };
-        Ok(Output::Data(Item::Number(left * right)))
+pub fn modulo(_machine: &mut Machine, args: Vec<EnvItem>) -> FunctionOutput {
+    if args.len() != 2 {
+        Err(error::mismatch_arguments("modulo", 2, args.len()))
     } else {
-        panic!("Multiplication: Not a list of numbers");
+        Ok(Output::Data(Item::Number(
+            get_number(&args[0])? % get_number(&args[1])?,
+        )))
     }
 }
 
-pub fn division(input: &Item, env: &mut Environment) -> FunctionOutput {
-    if let Item::Cons(list) = input {
-        if list.len() > 2 {
-            panic!("Division: Too many arguments");
-        }
-        let left = match eval(list.car(), env)? {
-            Output::Data(Item::Number(n)) => n,
-            Output::Data(Item::None) => 0,
-            _ => panic!(
-                "Division: Left constituent is not a number. (Only numbers supported for now)"
-            ),
-        };
-        let right = match list.cdr() {
-            Item::Number(n) => n,
-            Item::None => 1i64,
-            Item::Cons(c) => match eval(c.car(), env)? {
-                Output::Data(Item::Number(cn)) => cn,
-                _ => panic!(
-                    "Division: Right constituent is not a number. (Only numbers supported for now)"
-                ),
-            },
-            _ => panic!(
-                "Division: Right constituent is not a number. (Only numbers supported for now)"
-            ),
-        };
-        Ok(Output::Data(Item::Number(left / right)))
+pub fn less_than(_machine: &mut Machine, args: Vec<EnvItem>) -> FunctionOutput {
+    if args.len() != 2 {
+        Err(error::mismatch_arguments("less than", 2, args.len()))
     } else {
-        panic!("Division: Not a list of numbers");
+        Ok(Output::Data(Item::Boolean(
+            get_number(&args[0])? < get_number(&args[1])?,
+        )))
     }
 }
 
-pub fn modulo(input: &Item, env: &mut Environment) -> FunctionOutput {
-    if let Item::Cons(list) = input {
-        if list.len() > 2 {
-            panic!("Modulo: Too many arguments");
-        }
-        let left = match eval(list.car(), env)? {
-            Output::Data(Item::Number(n)) => n,
-            Output::Data(Item::None) => 0,
-            _ => {
-                panic!("Modulo: Left constituent is not a number. (Only numbers supported for now)")
-            }
-        };
-        let right = match list.cdr() {
-            Item::Number(n) => n,
-            Item::None => 0i64,
-            Item::Cons(c) => match eval(c.car(), env)? {
-                Output::Data(Item::Number(cn)) => cn,
-                _ => panic!(
-                    "Modulo: Right constituent is not a number. (Only numbers supported for now)"
-                ),
-            },
-            _ => panic!(
-                "Modulo: Right constituent is not a number. (Only numbers supported for now)"
-            ),
-        };
-        Ok(Output::Data(Item::Number(left % right)))
+pub fn greater_than(_machine: &mut Machine, args: Vec<EnvItem>) -> FunctionOutput {
+    if args.len() != 2 {
+        Err(error::mismatch_arguments("greater than", 2, args.len()))
     } else {
-        panic!("Modulo: Not a list of numbers");
-    }
-}
-
-pub fn less_than(input: &Item, env: &mut Environment) -> FunctionOutput {
-    if let Item::Cons(list) = input {
-        if list.len() > 2 {
-            panic!("<: Too many arguments");
-        }
-        let left = match eval(list.car(), env)? {
-            Output::Data(Item::Number(n)) => n,
-            Output::Data(Item::None) => 0,
-            _ => panic!("<: Left constituent is not a number. (Only numbers supported for now)"),
-        };
-        let right = match list.cdr() {
-            Item::Number(n) => n,
-            Item::None => 0i64,
-            Item::Cons(c) => match eval(c.car(), env)? {
-                Output::Data(Item::Number(cn)) => cn,
-                _ => {
-                    panic!("<: Right constituent is not a number. (Only numbers supported for now)")
-                }
-            },
-            _ => panic!("<: Right constituent is not a number. (Only numbers supported for now)"),
-        };
-        Ok(Output::Data(Item::Boolean(left < right)))
-    } else {
-        panic!("<: Not a list of numbers");
-    }
-}
-
-pub fn greater_than(input: &Item, env: &mut Environment) -> FunctionOutput {
-    if let Item::Cons(list) = input {
-        if list.len() > 2 {
-            panic!(">: Too many arguments");
-        }
-        let left = match eval(list.car(), env)? {
-            Output::Data(Item::Number(n)) => n,
-            Output::Data(Item::None) => 0,
-            _ => panic!(">: Left constituent is not a number. (Only numbers supported for now)"),
-        };
-        let right = match list.cdr() {
-            Item::Number(n) => n,
-            Item::None => 0i64,
-            Item::Cons(c) => match eval(c.car(), env)? {
-                Output::Data(Item::Number(cn)) => cn,
-                _ => {
-                    panic!(">: Right constituent is not a number. (Only numbers supported for now)")
-                }
-            },
-            _ => panic!(">: Right constituent is not a number. (Only numbers supported for now)"),
-        };
-        Ok(Output::Data(Item::Boolean(left > right)))
-    } else {
-        panic!(">: Not a list of numbers");
+        Ok(Output::Data(Item::Boolean(
+            get_number(&args[0])? > get_number(&args[1])?,
+        )))
     }
 }

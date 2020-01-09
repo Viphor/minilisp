@@ -1,7 +1,18 @@
+use super::vm::VMError;
+
 #[derive(Debug)]
 pub struct EvalError {
     pub code: EvalErrorCode,
     pub message: String,
+}
+
+impl From<VMError> for EvalError {
+    fn from(error: VMError) -> EvalError {
+        EvalError {
+            message: error.message().into(),
+            code: EvalErrorCode::E0011,
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -26,6 +37,8 @@ pub enum EvalErrorCode {
     E0009,
     /// Parameter list unparseable
     E0010,
+    /// VMError
+    E0011,
 }
 
 pub fn mismatch_arguments(method: &str, expected: usize, found: usize) -> EvalError {
