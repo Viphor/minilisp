@@ -1,30 +1,34 @@
 use super::*;
 use std::rc::Rc;
 
-pub fn lambda(_params: &Item, _: &mut Environment) -> FunctionOutput {
-    unimplemented!();
-    //let cons;
-    //if let Item::Cons(c) = params {
-    //    cons = c.clone();
-    //} else {
-    //    panic!("A lambda expression must have a least a set of arguments and a body");
-    //}
-    //let argument_bindings = cons.car().clone();
-    //let body = match cons.cdr() {
-    //    Item::Cons(c) => c.into(),
-    //    i => vec![i],
-    //};
+//pub fn lambda(machine: &mut Machine) -> FunctionOutput {
+//    let body = machine.lookup("body")?;
+//    machine.
+//}
 
-    //Ok(Output::Function(Rc::new(move |input, mut env| {
-    //    variable_binder(argument_bindings.clone(), input.clone(), &mut env)?;
+//pub fn lambda(_params: &Item, _: &mut Environment) -> FunctionOutput {
+//let cons;
+//if let Item::Cons(c) = params {
+//    cons = c.clone();
+//} else {
+//    panic!("A lambda expression must have a least a set of arguments and a body");
+//}
+//let argument_bindings = cons.car().clone();
+//let body = match cons.cdr() {
+//    Item::Cons(c) => c.into(),
+//    i => vec![i],
+//};
 
-    //    let mut last_res = EnvItem::Data(Item::None);
-    //    for statement in body.iter() {
-    //        last_res = eval(&statement, &mut env)?;
-    //    }
-    //    Ok(last_res)
-    //})))
-}
+//Ok(Output::Function(Rc::new(move |input, mut env| {
+//    variable_binder(argument_bindings.clone(), input.clone(), &mut env)?;
+
+//    let mut last_res = EnvItem::Data(Item::None);
+//    for statement in body.iter() {
+//        last_res = eval(&statement, &mut env)?;
+//    }
+//    Ok(last_res)
+//})))
+//}
 
 //pub fn variable_binder(
 //    variables: Item,

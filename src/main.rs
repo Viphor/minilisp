@@ -57,9 +57,24 @@ fn eval(input: String, machine: &mut vm::Machine) -> Result<String, parser::erro
     Ok(data
         .into_iter()
         .map(|d| {
-            let answer = machine
-                .eval(d.clone())
-                .expect("Could not evaluate the input");
+            let answer = machine.eval(d.clone());
+            let answer = match answer {
+                Ok(res) => res,
+                #[allow(unused_mut)]
+                Err(mut err) => {
+                    #[cfg(feature = "vm-debug")]
+                    {
+                        let bt = err.backtrace_mut();
+                        bt.resolve();
+                        eprintln!("{:?}", bt);
+                    }
+                    eprintln!(
+                        "The VM failed with the following error: \"{}\"",
+                        err.message()
+                    );
+                    panic!();
+                }
+            };
             if let stdlib::EnvItem::Data(a) = answer {
                 format!("{}", a)
             } else {

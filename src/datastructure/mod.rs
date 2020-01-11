@@ -23,7 +23,13 @@ impl fmt::Display for Item {
         match self {
             Item::Number(num) => write!(f, "{}", num),
             Item::String(s) => write!(f, "\"{}\"", s),
-            Item::Boolean(b) => write!(f, "{}", b),
+            Item::Boolean(b) => {
+                if *b {
+                    write!(f, "#t")
+                } else {
+                    write!(f, "#f")
+                }
+            }
             Item::Name(n) => write!(f, "{}", n),
             Item::Cons(c) => write!(f, "{}", c),
             Item::None => write!(f, "()"),
@@ -85,7 +91,7 @@ impl Cons {
         }
     }
 
-    pub fn iter(&self) -> Iter<Item> {
+    pub fn iter(&self) -> Iter<ConsElement> {
         self.data.iter()
     }
 
@@ -102,6 +108,29 @@ impl Cons {
                 data: (&self.data[1..]).to_vec(),
                 is_null_terminated: self.is_null_terminated,
             }),
+        }
+    }
+
+    pub fn cddr(&self) -> ConsElement {
+        match self.data.len() {
+            3 if !self.is_null_terminated => self.data[2].clone(),
+            2 => ConsElement::None,
+            1 => panic!("Not enough elements!"), // TODO This should be handled more gracefully
+            0 => panic!("A Cons should never be empty! Contact your vendor. this is a bug"),
+            _ => ConsElement::Cons(Cons {
+                data: (&self.data[2..]).to_vec(),
+                is_null_terminated: self.is_null_terminated,
+            }),
+        }
+    }
+
+    pub fn cddr_list(&self) -> Vec<Item> {
+        match self.data.len() {
+            3 if !self.is_null_terminated => vec![self.data[2].clone()],
+            2 => Vec::new(),
+            1 => panic!("Not enough elements!"), // TODO This should be handled more gracefully
+            0 => panic!("A Cons should never be empty! Contact your vendor. this is a bug"),
+            _ => (&self.data[2..]).to_vec(),
         }
     }
 
@@ -188,21 +217,47 @@ impl From<Vec<Item>> for Cons {
 
 pub type Output = EnvItem;
 pub type FunctionOutput = Result<EnvItem, error::EvalError>;
-pub type EnvItemFunction = dyn Fn(&mut Machine, Vec<EnvItem>) -> FunctionOutput;
+pub type EnvItemFunction = dyn Fn(&mut Machine) -> FunctionOutput;
 pub type EnvItemFunctionWrapped = Rc<EnvItemFunction>;
+
+#[derive(Clone, Debug)]
+pub enum Parameters {
+    All(String),
+    Individual(Vec<String>),
+}
 
 #[derive(Clone)]
 pub enum EnvItem {
-    Function(EnvItemFunctionWrapped),
+    Function(String, EnvItemFunctionWrapped, Parameters),
     Data(Item),
+    VariableBinding(Vec<EnvItem>),
     None,
 }
 
 impl fmt::Debug for EnvItem {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            EnvItem::Function(fun) => write!(f, "<Function@{:p}>", fun),
+            EnvItem::Function(name, func, _) => write!(f, "<{}@{:p}>", name, func),
             EnvItem::Data(d) => write!(f, "{:?}", d),
+            EnvItem::VariableBinding(v) => write!(f, "{:?}", v),
+            EnvItem::None => write!(f, "None"),
+        }
+    }
+}
+
+impl fmt::Display for EnvItem {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            EnvItem::Function(name, _, _) => write!(f, "{}", name),
+            EnvItem::Data(d) => write!(f, "{}", d),
+            EnvItem::VariableBinding(v) => write!(
+                f,
+                "({})",
+                v.iter()
+                    .map(|x| format!("{}", x))
+                    .collect::<Vec<String>>()
+                    .join(" ")
+            ),
             EnvItem::None => write!(f, "None"),
         }
     }
@@ -211,8 +266,8 @@ impl fmt::Debug for EnvItem {
 impl PartialEq for EnvItem {
     fn eq(&self, other: &Self) -> bool {
         match self {
-            EnvItem::Function(f) => {
-                if let EnvItem::Function(o) = other {
+            EnvItem::Function(_, f, _) => {
+                if let EnvItem::Function(_, o, _) = other {
                     let left: *const EnvItemFunction = f.as_ref();
                     let right: *const EnvItemFunction = o.as_ref();
                     left == right
@@ -223,6 +278,13 @@ impl PartialEq for EnvItem {
             EnvItem::Data(d) => {
                 if let EnvItem::Data(o) = other {
                     d == o
+                } else {
+                    false
+                }
+            }
+            EnvItem::VariableBinding(v) => {
+                if let EnvItem::VariableBinding(o) = other {
+                    v == o
                 } else {
                     false
                 }
@@ -295,10 +357,7 @@ impl Environment {
     {
         let key = key.into();
         if let Some(var) = self.variables.first_mut() {
-            println!("mark!");
-            let res = var.insert(key, value);
-            println!("{:?}", res);
-            res
+            var.insert(key, value)
         } else {
             None
         }
